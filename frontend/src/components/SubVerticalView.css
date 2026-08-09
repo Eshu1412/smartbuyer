@@ -1,0 +1,307 @@
+/* ══════════════════════════════════════════════════════
+   SubVerticalView — FLAT DESIGN: Plan Tiers & Form
+   ══════════════════════════════════════════════════════ */
+
+.subvertical-view {
+  background: var(--bg-muted);
+  min-height: 85vh;
+  padding-top: calc(var(--nav-height) + var(--space-8));
+  padding-bottom: var(--space-24);
+}
+
+.subvertical-header {
+  text-align: center;
+  margin-bottom: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.subvertical-icon-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: var(--space-4);
+}
+
+.subvertical-title {
+  font-size: var(--fs-4xl);
+  font-weight: var(--fw-extrabold);
+  color: var(--fg);
+  margin-bottom: var(--space-4);
+  letter-spacing: var(--ls-tight);
+}
+
+.subvertical-subtitle {
+  font-size: var(--fs-md);
+  color: var(--fg-secondary);
+  line-height: var(--lh-relaxed);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* Plans Grid */
+.plans-grid {
+  display: grid;
+  gap: var(--space-6);
+  margin-bottom: var(--space-16);
+}
+
+.plans-grid--1 { grid-template-columns: 1fr; max-width: 500px; margin-left: auto; margin-right: auto; }
+.plans-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.plans-grid--3 { grid-template-columns: repeat(3, 1fr); }
+
+.plan-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: none !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.plan-card-top {
+  height: 6px;
+  background: var(--primary);
+}
+
+.plan-card-body {
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.plan-name {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-extrabold);
+  color: var(--fg);
+  margin-bottom: var(--space-1);
+}
+
+.plan-price {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--primary);
+  margin-bottom: var(--space-4);
+}
+
+.plan-detail {
+  font-size: var(--fs-sm);
+  color: var(--fg-secondary);
+  line-height: var(--lh-relaxed);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-6);
+}
+
+.plan-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: auto;
+}
+
+.plan-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--fg);
+}
+
+.feature-check {
+  color: var(--secondary);
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Form Wrapper */
+.form-wrapper {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border-strong);
+  overflow: hidden;
+  box-shadow: none !important;
+}
+
+.form-banner {
+  background: var(--bg-dark);
+  color: #ffffff;
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.form-banner h2 {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-extrabold);
+  color: #ffffff;
+  margin-bottom: var(--space-2);
+}
+
+.form-banner p {
+  font-size: var(--fs-sm);
+  color: var(--fg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qualification-form {
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.form-section-title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-extrabold);
+  color: var(--fg);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px solid var(--bg-muted);
+  margin-bottom: var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.step-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-questions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-field-group {
+  background: var(--bg-muted);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.form-label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--fg);
+  margin-bottom: var(--space-2);
+}
+
+.form-select,
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  outline: none;
+  transition: all var(--duration) var(--ease);
+}
+
+.form-select option {
+  background: #ffffff;
+  color: #0F172A;
+}
+
+.form-select:focus,
+.form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.zip-group .form-input {
+  max-width: 240px;
+}
+
+.tcpa-box {
+  background: #F8FAFC;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+}
+
+.tcpa-label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.tcpa-checkbox {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+
+.tcpa-text {
+  font-size: var(--fs-xs);
+  color: #334155;
+  line-height: var(--lh-relaxed);
+  font-weight: var(--fw-medium);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 18px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-extrabold);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .plans-grid--2,
+  .plans-grid--3 {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .zip-group .form-input {
+    max-width: 100%;
+  }
+
+  .qualification-form {
+    padding: var(--space-5);
+  }
+}

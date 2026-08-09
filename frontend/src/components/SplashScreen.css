@@ -1,0 +1,182 @@
+/* ══════════════════════════════════════════════════════
+   Splash Screen — FLAT DESIGN SYSTEM THEME
+   Solid Primary Blue canvas, crisp white & amber typography
+   ══════════════════════════════════════════════════════ */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+  color: #ffffff;
+}
+
+/* ── Poster Geometric Background Shapes (No Blur) ── */
+.splash-geo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.splash-geo-shape {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.splash-geo-shape:nth-child(1) {
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  top: -120px;
+  right: -80px;
+}
+
+.splash-geo-shape:nth-child(2) {
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  bottom: -80px;
+  left: -60px;
+}
+
+.splash-geo-shape:nth-child(3) {
+  width: 160px;
+  height: 160px;
+  border-radius: var(--radius-lg);
+  top: 45%;
+  left: 55%;
+  transform: rotate(45deg);
+}
+
+/* ── Logo & Brand ────────────────────────────────── */
+.splash-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.splash-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: var(--fw-extrabold);
+  color: var(--primary);
+  font-family: var(--font);
+  letter-spacing: -0.02em;
+  box-shadow: none !important;
+}
+
+.splash-brand {
+  text-align: center;
+}
+
+.splash-name {
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-extrabold);
+  color: #ffffff;
+  letter-spacing: var(--ls-tight);
+  font-family: var(--font);
+  margin-bottom: var(--space-2);
+}
+
+.splash-name span {
+  color: var(--accent);
+}
+
+.splash-tagline {
+  font-size: var(--fs-xs);
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ── Loading Bar (Flat Amber Bar, No Shadow) ──────── */
+.splash-loader {
+  margin-top: var(--space-8);
+  width: 220px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.splash-loader-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+  box-shadow: none !important;
+}
+
+/* ── Dots Pulse ─────────────────────────────────── */
+.splash-dots {
+  display: flex;
+  gap: 8px;
+  margin-top: var(--space-4);
+}
+
+.splash-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+
+.splash-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.splash-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    background: var(--accent);
+    transform: scale(1.3);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 480px) {
+  .splash-logo {
+    width: 68px;
+    height: 68px;
+    font-size: 26px;
+  }
+
+  .splash-name {
+    font-size: var(--fs-2xl);
+  }
+
+  .splash-loader {
+    width: 180px;
+  }
+}
+
+

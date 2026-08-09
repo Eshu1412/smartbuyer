@@ -1,0 +1,58 @@
+/* ══════════════════════════════════════════════════════
+   ThankYouView — FLAT DESIGN: Confirmation Screen
+   ══════════════════════════════════════════════════════ */
+
+.thankyou-view {
+  background: var(--bg-muted);
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: calc(var(--nav-height) + var(--space-8));
+  padding-bottom: var(--space-20);
+}
+
+.thankyou-card {
+  background: var(--bg-white);
+  padding: var(--space-12) var(--space-8);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: none !important;
+}
+
+.thankyou-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--secondary-light);
+  color: var(--secondary);
+  font-size: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-6);
+}
+
+.thankyou-title {
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-extrabold);
+  color: var(--fg);
+  margin-bottom: var(--space-4);
+  letter-spacing: var(--ls-tight);
+}
+
+.thankyou-message {
+  font-size: var(--fs-md);
+  color: var(--fg-secondary);
+  line-height: var(--lh-relaxed);
+  margin-bottom: var(--space-10);
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.thankyou-btn {
+  padding: 16px 32px;
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-sm);
+}
