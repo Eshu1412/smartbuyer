@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import SplashScreen from './components/SplashScreen'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
@@ -58,9 +59,24 @@ export default function App() {
     setQuoteOpen(true)
   }
 
+  const activeKey = `${viewState}-${activeVertical}-${activeSub}`
+
   return (
     <>
       {!splashDone && <SplashScreen onComplete={handleSplashComplete} />}
+
+      {/* Top Sweep Progress Indicator on Page Transitions */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`bar-${activeKey}`}
+          className="page-transition-bar"
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </AnimatePresence>
+
       <Navbar
         onQuoteClick={() => handleOpenQuote('')}
         onNavigateHome={handleNavigateHome}
@@ -68,42 +84,76 @@ export default function App() {
         viewState={viewState}
         activeVertical={activeVertical}
       />
-      <main>
-        {viewState === 'home' && (
-          <>
-            <Hero onQuoteClick={() => handleOpenQuote('')} />
-            <Services onSelectSubVertical={handleNavigateSubVertical} />
-            <HowItWorks />
-            <Testimonials />
-            <FAQ onQuoteClick={() => handleOpenQuote('')} />
-          </>
-        )}
 
-        {viewState === 'vertical' && (
-          <CategoryView
-            verticalId={activeVertical}
-            onNavigateHome={handleNavigateHome}
-            onSelectSubVertical={handleNavigateSubVertical}
-          />
-        )}
+      <main style={{ position: 'relative', overflow: 'hidden' }}>
+        <AnimatePresence mode="wait">
+          {viewState === 'home' && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 20, scale: 0.995 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.995 }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Hero onQuoteClick={() => handleOpenQuote('')} />
+              <Services onSelectSubVertical={handleNavigateSubVertical} />
+              <HowItWorks />
+              <Testimonials />
+              <FAQ onQuoteClick={() => handleOpenQuote('')} />
+            </motion.div>
+          )}
 
-        {viewState === 'sub-vertical' && (
-          <SubVerticalView
-            verticalId={activeVertical}
-            subId={activeSub}
-            onNavigateHome={handleNavigateHome}
-            onNavigateVertical={handleNavigateVertical}
-            onFormSubmitted={handleFormSubmitted}
-          />
-        )}
+          {viewState === 'vertical' && (
+            <motion.div
+              key={`vertical-${activeVertical}`}
+              initial={{ opacity: 0, y: 20, scale: 0.995 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.995 }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <CategoryView
+                verticalId={activeVertical}
+                onNavigateHome={handleNavigateHome}
+                onSelectSubVertical={handleNavigateSubVertical}
+              />
+            </motion.div>
+          )}
 
-        {viewState === 'thank-you' && (
-          <ThankYouView
-            leadData={submittedLead}
-            onNavigateHome={handleNavigateHome}
-          />
-        )}
+          {viewState === 'sub-vertical' && (
+            <motion.div
+              key={`sub-vertical-${activeVertical}-${activeSub}`}
+              initial={{ opacity: 0, y: 20, scale: 0.995 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.995 }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <SubVerticalView
+                verticalId={activeVertical}
+                subId={activeSub}
+                onNavigateHome={handleNavigateHome}
+                onNavigateVertical={handleNavigateVertical}
+                onFormSubmitted={handleFormSubmitted}
+              />
+            </motion.div>
+          )}
+
+          {viewState === 'thank-you' && (
+            <motion.div
+              key="thank-you"
+              initial={{ opacity: 0, scale: 0.96, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -15 }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <ThankYouView
+                leadData={submittedLead}
+                onNavigateHome={handleNavigateHome}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
+
       <Footer onQuoteClick={() => handleOpenQuote('')} />
       <QuoteForm
         isOpen={quoteOpen}

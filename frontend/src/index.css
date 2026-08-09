@@ -207,6 +207,20 @@ input, select, textarea {
   color: #fff;
 }
 
+/* ── Page Transition Top Sweep Indicator ─────────── */
+.page-transition-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #2563EB 0%, #60A5FA 50%, #10B981 100%);
+  z-index: 9999;
+  transform-origin: 0% 50%;
+  pointer-events: none;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.6);
+}
+
 /* ── Utility Classes ────────────────────────────────── */
 .container {
   width: 100%;
