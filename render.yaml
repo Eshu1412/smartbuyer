@@ -1,0 +1,13 @@
+# render.yaml configuration file for Render deployment
+services:
+  - type: web
+    name: smartbuyer
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: TRUSTEDFORM_API_KEY
+        value: YOUR_TRUSTEDFORM_API_KEY
