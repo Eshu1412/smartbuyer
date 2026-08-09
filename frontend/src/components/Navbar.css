@@ -118,7 +118,7 @@
   margin-left: var(--space-4);
 }
 
-/* ── Mobile Menu ─────────────────────────────────── */
+/* ── Mobile Menu Toggle Button ─────────────────────── */
 .navbar-toggle {
   display: none;
   flex-direction: column;
@@ -134,14 +134,10 @@
   display: block;
   width: 24px;
   height: 2.5px;
-  background: var(--fg); /* #0F172A - Visible on light glass header */
+  background: var(--fg);
   border-radius: 2px;
   transition: all var(--duration) var(--ease);
   transform-origin: center;
-}
-
-.navbar-toggle.active span {
-  background: #ffffff;
 }
 
 .navbar-toggle.active span:nth-child(1) {
@@ -156,6 +152,25 @@
   transform: rotate(-45deg) translate(5px, -5px);
 }
 
+/* ── Mobile Menu State Overrides ─────────────────── */
+.navbar.mobile-open .navbar-logo {
+  color: #ffffff !important;
+  z-index: 2005;
+}
+
+.navbar.mobile-open .navbar-logo span {
+  color: #60A5FA !important;
+}
+
+.navbar.mobile-open .navbar-toggle {
+  z-index: 2005;
+}
+
+.navbar.mobile-open .navbar-toggle span {
+  background: #ffffff !important;
+}
+
+/* ── Mobile Menu Container ────────────────────────── */
 .mobile-menu {
   display: none;
 }
@@ -180,17 +195,20 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.96);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    width: 100vw;
+    height: 100vh;
+    background: #0F172A; /* 100% Solid dark background prevents any page text bleed-through */
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-8);
-    z-index: 999;
+    justify-content: flex-start;
+    padding-top: calc(var(--nav-height) + 28px);
+    padding-bottom: 40px;
+    gap: var(--space-4);
+    z-index: 2000;
     opacity: 0;
     pointer-events: none;
     transition: opacity var(--duration-lg) var(--ease);
+    overflow-y: auto;
   }
 
   .mobile-menu.open {
@@ -199,18 +217,34 @@
   }
 
   .mobile-menu .navbar-link {
-    font-size: var(--fs-2xl);
-    color: #ffffff;
+    font-size: 1.25rem;
+    color: #F8FAFC;
     font-weight: var(--fw-semibold);
+    padding: 12px 24px;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+    border-radius: var(--radius-md);
+    transition: all var(--duration) var(--ease);
+    background: transparent;
+    border: none;
   }
 
   .mobile-menu .navbar-link:hover,
   .mobile-menu .navbar-link.active {
     color: #60A5FA;
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .mobile-menu .navbar-link::after {
     display: none;
+  }
+
+  .mobile-menu .btn-primary {
+    margin-top: var(--space-4);
+    width: 100%;
+    max-width: 300px;
+    padding: 16px;
   }
 }
 

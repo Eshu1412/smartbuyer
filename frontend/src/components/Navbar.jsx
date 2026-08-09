@@ -43,7 +43,7 @@ export default function Navbar({ onQuoteClick, onNavigateHome, onNavigateVertica
 
   return (
     <motion.nav
-      className={`navbar ${scrolled ? 'scrolled' : ''}`}
+      className={`navbar ${scrolled ? 'scrolled' : ''} ${mobileOpen ? 'mobile-open' : ''}`}
       initial={{ y: -80 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
