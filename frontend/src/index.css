@@ -199,7 +199,7 @@ img {
 
 input, select, textarea {
   font-family: var(--font);
-  font-size: var(--fs-base);
+  font-size: 16px; /* 16px prevents iOS Safari from auto-zooming on focus */
 }
 
 ::selection {
