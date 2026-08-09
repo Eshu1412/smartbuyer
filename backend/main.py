@@ -294,3 +294,13 @@ async def get_leads_list(search: str = "", status: str = "", page: int = 1, per_
 async def health_check():
     return {"status": "healthy"}
 
+
+# Serve static frontend production build if present
+import os
+from fastapi.staticfiles import StaticFiles
+
+frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="static")
+
+
