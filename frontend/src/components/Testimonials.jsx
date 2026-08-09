@@ -98,21 +98,23 @@ export default function Testimonials() {
               style={{ transform: `translateX(-${trackOffset}%)` }}
             >
               {testimonials.map((t) => (
-                <div key={t.id} className="testimonial-card">
-                  <span className="testimonial-quote-mark">"</span>
-                  <div className="testimonial-stars">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span key={star} className={`testimonial-star ${star <= t.rating ? '' : 'empty'}`}>
-                        {star <= t.rating ? <FaStar /> : <FaRegStar />}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="testimonial-text">"{t.quote}"</p>
-                  <div className="testimonial-author">
-                    <div className="testimonial-avatar">{t.initial}</div>
-                    <div>
-                      <div className="testimonial-name">{t.name}</div>
-                      <div className="testimonial-role">{t.role}</div>
+                <div key={t.id} className="testimonial-card-slot">
+                  <div className="testimonial-card">
+                    <span className="testimonial-quote-mark">"</span>
+                    <div className="testimonial-stars">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <span key={star} className={`testimonial-star ${star <= t.rating ? '' : 'empty'}`}>
+                          {star <= t.rating ? <FaStar /> : <FaRegStar />}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="testimonial-text">"{t.quote}"</p>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar">{t.initial}</div>
+                      <div>
+                        <div className="testimonial-name">{t.name}</div>
+                        <div className="testimonial-role">{t.role}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
