@@ -6,7 +6,7 @@ import './FAQ.css'
 const faqs = [
   {
     id: 1,
-    question: 'Is SmartBuyerQuotes really free to use?',
+    question: 'Is SmartQuoteHub really free to use?',
     answer: 'Yes, absolutely! Our comparison service is 100% free for consumers. We are compensated by our network of service providers, so you never pay a dime to use our platform.',
   },
   {

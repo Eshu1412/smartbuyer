@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { FaTimes, FaCheck, FaExternalLinkAlt } from 'react-icons/fa'
 import './QuoteForm.css'
 
-const REFERRAL_LINK = 'https://smartbuyerquotes.shop/'
+const REFERRAL_LINK = 'https://smartquotehub.shop/'
 
 const SERVICE_OPTIONS = [
   'Health Insurance',
@@ -201,7 +201,7 @@ export default function QuoteForm({ isOpen, onClose, defaultService = '' }) {
                       rel="noopener noreferrer"
                       className="referral-link"
                     >
-                      smartbuyerquotes.shop <FaExternalLinkAlt style={{ fontSize: '10px' }} />
+                      smartquotehub.shop <FaExternalLinkAlt style={{ fontSize: '10px' }} />
                     </a>
                   </div>
                 </form>

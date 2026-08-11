@@ -57,7 +57,7 @@ export default function SplashScreen({ onComplete }) {
               animate={{ scale: 1, rotate: 0 }}
               transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.1 }}
             >
-              SB
+              SQ
             </motion.div>
 
             {/* Brand Name */}
@@ -68,7 +68,7 @@ export default function SplashScreen({ onComplete }) {
               transition={{ duration: 0.4, delay: 0.35 }}
             >
               <div className="splash-name">
-                Smart<span>Buyer</span>Quotes
+                Smart<span>Quote</span>Hub
               </div>
               <div className="splash-tagline">Compare Plans & Get Quotes</div>
             </motion.div>

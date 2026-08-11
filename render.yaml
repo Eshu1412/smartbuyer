@@ -1,7 +1,7 @@
 # render.yaml configuration file for Render deployment
 services:
   - type: web
-    name: smartbuyer
+    name: smartquotehub
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile

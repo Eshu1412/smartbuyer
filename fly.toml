@@ -1,5 +1,5 @@
 # fly.toml app configuration file for Fly.io deployment
-app = "smartbuyer"
+app = "smartquotehub"
 primary_region = "iad"
 
 [build]

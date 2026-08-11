@@ -283,7 +283,7 @@ export default function SubVerticalView({ verticalId, subId, onNavigateHome, onN
                   className="tcpa-checkbox"
                 />
                 <span className="tcpa-text">
-                  By checking this box and clicking "Get My Quote Securely", you agree to our Terms of Service and Privacy Policy. You authorize SmartBuyerQuotes and its partners to contact you at the phone number provided, including via automated dialing systems, prerecorded messages, and text messages. Consent is not a condition of purchase.
+                  By checking this box and clicking "Get My Quote Securely", you agree to our Terms of Service and Privacy Policy. You authorize SmartQuoteHub and its partners to contact you at the phone number provided, including via automated dialing systems, prerecorded messages, and text messages. Consent is not a condition of purchase.
                 </span>
               </label>
             </div>

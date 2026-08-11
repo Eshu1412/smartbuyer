@@ -8,7 +8,7 @@ import database
 
 TRUSTEDFORM_API_KEY = "YOUR_TRUSTEDFORM_API_KEY"
 
-app = FastAPI(title="SmartBuyerQuotes API", version="1.0.0")
+app = FastAPI(title="SmartQuoteHub API", version="1.0.0")
 
 @app.on_event("startup")
 def startup_event():
@@ -40,7 +40,7 @@ async def retain_trusted_form_cert(cert_url: str) -> dict:
                 cert_url,
                 auth=("API", TRUSTEDFORM_API_KEY),
                 headers={"Accept": "application/json", "Content-Type": "application/json"},
-                json={"vendor": "SmartBuyerQuotes"}
+                json={"vendor": "SmartQuoteHub"}
             )
             if response.status_code in (200, 201):
                 data = response.json()
@@ -162,7 +162,7 @@ TESTIMONIALS = [
         "id": 1,
         "name": "Sarah Mitchell",
         "role": "Homeowner, Austin TX",
-        "quote": "SmartBuyerQuotes saved me over $1,200 on my home insurance. The comparison process was incredibly easy and I had quotes within minutes.",
+        "quote": "SmartQuoteHub saved me over $1,200 on my home insurance. The comparison process was incredibly easy and I had quotes within minutes.",
         "rating": 5,
         "avatar_initial": "S",
     },
@@ -178,7 +178,7 @@ TESTIMONIALS = [
         "id": 3,
         "name": "Linda Chen",
         "role": "Retiree, Portland OR",
-        "quote": "Navigating Medicare was so confusing until I found SmartBuyerQuotes. They made it simple to compare plans and find the right coverage.",
+        "quote": "Navigating Medicare was so confusing until I found SmartQuoteHub. They made it simple to compare plans and find the right coverage.",
         "rating": 5,
         "avatar_initial": "L",
     },
@@ -195,7 +195,7 @@ TESTIMONIALS = [
 FAQS = [
     {
         "id": 1,
-        "question": "Is SmartBuyerQuotes really free to use?",
+        "question": "Is SmartQuoteHub really free to use?",
         "answer": "Yes, absolutely! Our comparison service is 100% free for consumers. We are compensated by our network of service providers, so you never pay a dime to use our platform.",
     },
     {

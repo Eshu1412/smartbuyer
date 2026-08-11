@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════
-   SmartBuyerQuotes — FLAT DESIGN SYSTEM
+   SmartQuoteHub — FLAT DESIGN SYSTEM
    Bold, reductive, poster-inspired. Zero depth.
    ══════════════════════════════════════════════════════ */
 
@@ -282,7 +282,7 @@ input, select, textarea {
   position: relative;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 .btn:hover {
@@ -323,7 +323,7 @@ input, select, textarea {
 .btn-outline {
   background: transparent;
   color: var(--primary);
-  border: 4px solid var(--primary);
+  border: 2px solid var(--primary);
 }
 
 .btn-outline:hover {
@@ -333,7 +333,7 @@ input, select, textarea {
 
 .btn-outline--white {
   color: #fff;
-  border: 4px solid #fff;
+  border: 2px solid #fff;
 }
 
 .btn-outline--white:hover {

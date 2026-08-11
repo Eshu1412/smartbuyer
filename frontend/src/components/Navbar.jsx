@@ -50,8 +50,8 @@ export default function Navbar({ onQuoteClick, onNavigateHome, onNavigateVertica
     >
       <div className="navbar-inner">
         <a className="navbar-logo" href="#" onClick={(e) => { e.preventDefault(); handleLinkClick(onNavigateHome) }}>
-          <div className="navbar-logo-icon">SB</div>
-          Smart<span>Buyer</span>Quotes
+          <div className="navbar-logo-icon">SQ</div>
+          Smart<span>Quote</span>Hub
         </a>
 
         <div className="navbar-links">

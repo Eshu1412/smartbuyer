@@ -18,7 +18,7 @@ export default function Footer({ onQuoteClick }) {
             <div className="cta-band-content">
               <h2 className="cta-band-title">Ready to Save?</h2>
               <p className="cta-band-text">
-                Join 10,000+ users who found better deals through SmartBuyerQuotes. It's free, fast, and secure.
+                Join 10,000+ users who found better deals through SmartQuoteHub. It's free, fast, and secure.
               </p>
               <button className="btn" onClick={onQuoteClick}>
                 Get Your Free Quote Now
@@ -35,8 +35,8 @@ export default function Footer({ onQuoteClick }) {
             {/* Brand */}
             <div className="footer-brand">
               <div className="footer-logo">
-                <div className="footer-logo-icon">SB</div>
-                Smart<span>Buyer</span>Quotes
+                <div className="footer-logo-icon">SQ</div>
+                Smart<span>Quote</span>Hub
               </div>
               <p className="footer-tagline">
                 Connecting you with top-rated professionals nationwide. Fast, free, and completely secure.
@@ -78,7 +78,7 @@ export default function Footer({ onQuoteClick }) {
               <h4 className="footer-column-title">Contact</h4>
               <div className="footer-contact-item">
                 <FaEnvelope className="footer-contact-icon" />
-                <span>support@smartbuyerquotes.com</span>
+                <span>support@smartquotehub.com</span>
               </div>
               <div className="footer-contact-item">
                 <FaPhone className="footer-contact-icon" />
@@ -93,7 +93,7 @@ export default function Footer({ onQuoteClick }) {
 
           <div className="footer-bottom">
             <p className="footer-copyright">
-              © {currentYear} SmartBuyerQuotes. All rights reserved.
+              © {currentYear} SmartQuoteHub. All rights reserved.
             </p>
             <div className="footer-bottom-links">
               <a href="#" className="footer-bottom-link">Sitemap</a>
