@@ -107,7 +107,6 @@ export default function App() {
         onQuoteClick={() => handleOpenQuote('')}
         onNavigateHome={handleNavigateHome}
         onNavigateVertical={handleNavigateVertical}
-        onNavigateAdmin={handleNavigateAdmin}
         viewState={viewState}
         activeVertical={activeVertical}
       />
@@ -183,7 +182,6 @@ export default function App() {
 
       <Footer
         onQuoteClick={() => handleOpenQuote('')}
-        onNavigateAdmin={handleNavigateAdmin}
       />
       <QuoteForm
         isOpen={quoteOpen}

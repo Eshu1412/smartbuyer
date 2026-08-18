@@ -2,7 +2,7 @@ import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram, FaEnvelope, FaPhone,
 import ScrollReveal from './ScrollReveal'
 import './Footer.css'
 
-export default function Footer({ onQuoteClick, onNavigateAdmin }) {
+export default function Footer({ onQuoteClick }) {
   const currentYear = new Date().getFullYear()
 
   return (
@@ -99,15 +99,6 @@ export default function Footer({ onQuoteClick, onNavigateAdmin }) {
               <a href="#" className="footer-bottom-link">Sitemap</a>
               <a href="#" className="footer-bottom-link">Accessibility</a>
               <a href="#" className="footer-bottom-link">Disclaimer</a>
-              {onNavigateAdmin && (
-                <button
-                  onClick={onNavigateAdmin}
-                  className="footer-bottom-link"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4ecdc4', fontWeight: 600 }}
-                >
-                  🔒 Admin Portal
-                </button>
-              )}
             </div>
           </div>
         </div>
