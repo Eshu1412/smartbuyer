@@ -6,19 +6,25 @@ Supports:
 """
 
 import os
+from pathlib import Path
 import sqlite3
 import httpx
 from datetime import datetime
 
+# Automatically load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    _env_file = Path(__file__).resolve().parent / ".env"
+    if _env_file.exists():
+        load_dotenv(dotenv_path=_env_file)
+    else:
+        load_dotenv()
+except ImportError:
+    pass
+
 # ── Turso Configuration ────────────────────────────────
-TURSO_DB_URL = os.getenv(
-    "TURSO_DATABASE_URL", 
-    "libsql://YOUR_TURSO_DATABASE_HOST"
-)
-TURSO_AUTH_TOKEN = os.getenv(
-    "TURSO_AUTH_TOKEN",
-    "YOUR_TURSO_AUTH_TOKEN"
-)
+TURSO_DB_URL = os.getenv("TURSO_DATABASE_URL", "")
+TURSO_AUTH_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
 
 # Normalize Turso URL for HTTP Pipeline API
 if TURSO_DB_URL.startswith("libsql://"):
