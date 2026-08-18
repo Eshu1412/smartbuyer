@@ -503,7 +503,6 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                           className={`status-pill ${lead.status}`}
                           value={lead.status}
                           onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                          style={{ cursor: 'pointer', font: 'inherit' }}
                         >
                           <option value="new">NEW</option>
                           <option value="contacted">CONTACTED</option>
