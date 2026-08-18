@@ -100,6 +100,10 @@ class QuoteRequest(BaseModel):
     annual_income_range: Optional[str] = None
     trusted_form_cert_url: Optional[str] = None
     xxTrustedFormCertUrl: Optional[str] = None
+    answers: Optional[dict] = None
+    vertical_id: Optional[str] = None
+    sub_id: Optional[str] = None
+    notes: Optional[str] = None
 
 class LoginRequest(BaseModel):
     username: str
@@ -312,26 +316,69 @@ async def submit_quote_request(request: QuoteRequest):
     if tf_cert_url:
         tf_result = await retain_trusted_form_cert(tf_cert_url)
 
+    # Extract answers from dynamic questionnaire
+    answers = request.answers or {}
+    household_size = request.household_size or answers.get("household_size") or ""
+    annual_income = (
+        request.annual_income_range 
+        or answers.get("annual_income_range") 
+        or answers.get("income_range") 
+        or answers.get("debt_amount") 
+        or answers.get("coverage_amount") 
+        or ""
+    )
+    current_provider = (
+        request.current_provider 
+        or answers.get("current_provider") 
+        or answers.get("current_carrier") 
+        or answers.get("current_coverage") 
+        or ""
+    )
+    dob = (
+        request.date_of_birth 
+        or answers.get("date_of_birth") 
+        or answers.get("age_group") 
+        or answers.get("age_range") 
+        or ""
+    )
+
+    # Compile structured notes from questionnaire responses
+    notes_parts = []
+    formatted_answers = [f"{k.replace('_', ' ').title()}: {v}" for k, v in answers.items() if v]
+    if formatted_answers:
+        notes_parts.append(" | ".join(formatted_answers))
+    if request.message:
+        notes_parts.append(f"Message: {request.message}")
+    if request.notes:
+        notes_parts.append(request.notes)
+    
+    combined_notes = "\n".join(notes_parts)
+
     lead_id = database.create_lead({
         "first_name": first_name,
         "last_name": last_name,
         "email": request.email,
         "phone": request.phone,
         "zip_code": request.zip_code,
-        "date_of_birth": request.date_of_birth or "",
+        "date_of_birth": dob,
         "service_type": request.service_type,
-        "current_provider": request.current_provider or "",
-        "household_size": request.household_size or "",
-        "annual_income_range": request.annual_income_range or "",
+        "current_provider": current_provider,
+        "household_size": str(household_size),
+        "annual_income_range": str(annual_income),
         "consent": True,
         "trusted_form_cert_url": tf_cert_url,
         "trusted_form_retained": tf_result.get("retained", False),
         "trusted_form_cert_id": tf_result.get("cert_id", ""),
+        "status": "new",
+        "notes": combined_notes,
     })
+
+    created_lead = database.get_lead_by_id(lead_id)
 
     return {
         "success": True,
         "lead_id": lead_id,
+        "lead": created_lead,
         "trusted_form": tf_result,
         "message": f"Thank you, {request.full_name}! Your quote request for {request.service_type} has been received. We'll reach out shortly.",
     }

@@ -97,8 +97,14 @@ export default function SubVerticalView({ verticalId, subId, onNavigateHome, onN
       setSubmitting(false)
       if (onFormSubmitted) {
         onFormSubmitted({
-          name: contactData.first_name || 'Valued Customer',
-          service: sub.title
+          name: `${contactData.first_name} ${contactData.last_name}`.trim() || 'Valued Customer',
+          first_name: contactData.first_name,
+          last_name: contactData.last_name,
+          email: contactData.email,
+          phone: contactData.phone,
+          zip_code: contactData.zip_code,
+          service: sub.title,
+          answers: customAnswers,
         })
       }
     }

@@ -27,8 +27,11 @@ export default function QuoteForm({ isOpen, onClose, defaultService = '' }) {
   const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
-    if (defaultService) {
-      setFormData((prev) => ({ ...prev, service_type: defaultService }))
+    if (isOpen) {
+      setFormData((prev) => ({
+        ...prev,
+        service_type: defaultService || prev.service_type || SERVICE_OPTIONS[0]
+      }))
     }
   }, [defaultService, isOpen])
 
@@ -216,12 +219,30 @@ export default function QuoteForm({ isOpen, onClose, defaultService = '' }) {
                 <div className="success-icon"><FaCheck /></div>
                 <h3>Request Submitted!</h3>
                 <p>{successMessage}</p>
+
+                <div style={{
+                  background: 'var(--bg-subtle, #f1f5f9)',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  margin: '16px 0',
+                  textAlign: 'left',
+                  fontSize: '0.85rem',
+                  border: '1px solid rgba(226, 232, 240, 0.9)'
+                }}>
+                  <div style={{ fontWeight: '700', marginBottom: '6px', color: '#0f172a' }}>Confirmed Details:</div>
+                  <div><strong>Applicant:</strong> {formData.full_name}</div>
+                  <div><strong>Selected Service:</strong> {formData.service_type}</div>
+                  <div><strong>Email:</strong> {formData.email}</div>
+                  <div><strong>Phone:</strong> {formData.phone}</div>
+                  <div><strong>ZIP:</strong> {formData.zip_code}</div>
+                </div>
+
                 <a
                   href={`${REFERRAL_LINK}?service=${encodeURIComponent(formData.service_type || 'General')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary"
-                  style={{ marginTop: '1rem', display: 'inline-flex' }}
+                  style={{ marginTop: '0.5rem', display: 'inline-flex' }}
                 >
                   Continue to Official Form ↗
                 </a>

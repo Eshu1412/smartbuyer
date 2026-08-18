@@ -45,10 +45,111 @@
   font-size: var(--fs-md);
   color: var(--fg-secondary);
   line-height: var(--lh-relaxed);
-  margin-bottom: var(--space-10);
+  margin-bottom: var(--space-6);
   max-width: 480px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Summary Card */
+.thankyou-summary-card {
+  background: var(--bg-muted);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-bottom: var(--space-8);
+  text-align: left;
+}
+
+.thankyou-summary-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--primary);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-4);
+}
+
+.thankyou-shield {
+  font-size: 14px;
+}
+
+.thankyou-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.thankyou-grid-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.thankyou-label {
+  font-size: 0.75rem;
+  font-weight: var(--fw-semibold);
+  color: var(--fg-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thankyou-val {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--fg);
+  word-break: break-word;
+}
+
+.thankyou-service-badge {
+  color: var(--primary);
+  font-weight: var(--fw-extrabold);
+}
+
+.thankyou-answers-section {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border);
+}
+
+.thankyou-answers-title {
+  font-size: 0.78rem;
+  font-weight: var(--fw-bold);
+  color: var(--fg-secondary);
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.thankyou-answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.thankyou-answer-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--fs-xs);
+  padding: 3px 0;
+}
+
+.thankyou-ans-key {
+  color: var(--fg-secondary);
+  font-weight: var(--fw-semibold);
+}
+
+.thankyou-ans-val {
+  color: var(--fg);
+  font-weight: var(--fw-bold);
+  text-align: right;
 }
 
 .thankyou-btn {
