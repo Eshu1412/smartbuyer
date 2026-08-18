@@ -4,8 +4,8 @@ import { FiLock, FiUser, FiArrowRight, FiShield, FiAlertCircle, FiSun, FiMoon, F
 import './AdminDashboard.css';
 
 export default function AdminLogin({ onLoginSuccess, theme = 'light', onToggleTheme, onNavigateHome }) {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,9 +26,9 @@ export default function AdminLogin({ onLoginSuccess, theme = 'light', onToggleTh
         throw new Error(data.detail || 'Login failed. Please check credentials.');
       }
 
-      // Save token and user details to localStorage
-      localStorage.setItem('adminToken', data.token);
-      localStorage.setItem('adminUser', JSON.stringify(data.user));
+      // No persistent localStorage auto-login: user must log in every time #admin is visited
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
 
       onLoginSuccess(data.user);
     } catch (err) {

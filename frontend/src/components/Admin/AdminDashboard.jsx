@@ -43,17 +43,10 @@ export default function AdminDashboard({ onNavigateHome }) {
     setSnackbars(prev => prev.filter(s => s.id !== id));
   };
 
-  // Check stored session on mount
+  // Always clear any stored session on mount so that every visit to #admin asks for login
   useEffect(() => {
-    const storedUser = localStorage.getItem('adminUser');
-    const storedToken = localStorage.getItem('adminToken');
-    if (storedUser && storedToken) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (err) {
-        console.error('Invalid session:', err);
-      }
-    }
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
   }, []);
 
   const toggleTheme = () => {
@@ -90,6 +83,13 @@ export default function AdminDashboard({ onNavigateHome }) {
     setUser(null);
   };
 
+  const handleReturnHome = () => {
+    handleLogout();
+    if (onNavigateHome) {
+      onNavigateHome();
+    }
+  };
+
   const handleFilterByService = (service) => {
     setServiceFilterTarget(service);
     setActiveTab('leads');
@@ -109,7 +109,7 @@ export default function AdminDashboard({ onNavigateHome }) {
       <AdminLogin 
         theme={theme}
         onToggleTheme={toggleTheme}
-        onNavigateHome={onNavigateHome}
+        onNavigateHome={handleReturnHome}
         onLoginSuccess={(u) => {
           setUser(u);
           showSnackbar(`Welcome back, ${u.username}!`, 'success');
@@ -195,7 +195,7 @@ export default function AdminDashboard({ onNavigateHome }) {
 
           {!sidebarCollapsed && <span className="admin-nav-section-label">Quick Links</span>}
 
-          <button className="admin-nav-item" onClick={onNavigateHome} title="Return to Consumer Site">
+          <button className="admin-nav-item" onClick={handleReturnHome} title="Return to Consumer Site">
             <FiHome className="admin-nav-icon" />
             {!sidebarCollapsed && <span>Public Website</span>}
           </button>
