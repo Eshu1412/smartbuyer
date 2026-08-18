@@ -1,10 +1,11 @@
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 import database
+import auth
 
 TRUSTEDFORM_API_KEY = "YOUR_TRUSTEDFORM_API_KEY"
 
@@ -73,7 +74,6 @@ async def retain_trusted_form_cert(cert_url: str) -> dict:
         return {"retained": False, "cert_id": "", "error": str(e)}
 
 
-# ── Models ──────────────────────────────────────────────
 class QuoteRequest(BaseModel):
     full_name: str
     email: str
@@ -87,6 +87,45 @@ class QuoteRequest(BaseModel):
     annual_income_range: Optional[str] = None
     trusted_form_cert_url: Optional[str] = None
     xxTrustedFormCertUrl: Optional[str] = None
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class LeadUpdateRequest(BaseModel):
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    zip_code: Optional[str] = None
+    service_type: Optional[str] = None
+
+class BulkStatusRequest(BaseModel):
+    lead_ids: list[int]
+    status: str
+
+class BulkDeleteRequest(BaseModel):
+    lead_ids: list[int]
+
+class ManualLeadCreateRequest(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    phone: str
+    service_type: str
+    zip_code: str
+    status: Optional[str] = "new"
+    notes: Optional[str] = ""
+    current_provider: Optional[str] = ""
+    annual_income_range: Optional[str] = ""
+    date_of_birth: Optional[str] = ""
+
+class CreateUserRequest(BaseModel):
+    username: str
+    password: str
+    role: Optional[str] = "staff"
 
 
 
@@ -285,9 +324,170 @@ async def submit_quote_request(request: QuoteRequest):
     }
 
 
+@app.post("/api/admin/login")
+async def admin_login(req: LoginRequest):
+    user = database.get_user_by_username(req.username)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    if not auth.verify_password(req.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    return {
+        "success": True,
+        "token": f"session-{user['id']}-{user['username']}",
+        "user": {
+            "id": user["id"],
+            "username": user["username"],
+            "role": user["role"],
+            "created_at": user["created_at"]
+        }
+    }
+
+
+@app.get("/api/admin/stats")
+async def get_stats():
+    return database.get_dashboard_stats()
+
+
 @app.get("/api/leads")
-async def get_leads_list(search: str = "", status: str = "", page: int = 1, per_page: int = 20):
-    return database.get_leads(search=search, status=status, page=page, per_page=per_page)
+async def get_leads_list(
+    search: str = "", 
+    status: str = "", 
+    service_type: str = "", 
+    page: int = 1, 
+    per_page: int = 20,
+    sort_by: str = "created_at",
+    sort_order: str = "desc"
+):
+    return database.get_leads(
+        search=search, 
+        status=status, 
+        service_type=service_type, 
+        page=page, 
+        per_page=per_page,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
+
+
+@app.post("/api/admin/leads")
+async def create_manual_lead(req: ManualLeadCreateRequest):
+    lead_id = database.create_lead({
+        "first_name": req.first_name,
+        "last_name": req.last_name,
+        "email": req.email,
+        "phone": req.phone,
+        "zip_code": req.zip_code,
+        "service_type": req.service_type,
+        "current_provider": req.current_provider,
+        "household_size": "1",
+        "annual_income_range": req.annual_income_range,
+        "date_of_birth": req.date_of_birth,
+        "consent": True,
+        "trusted_form_cert_url": "",
+        "trusted_form_retained": False,
+        "trusted_form_cert_id": "",
+    })
+    database.update_lead(lead_id, {"status": req.status, "notes": req.notes})
+    return {"success": True, "lead_id": lead_id, "lead": database.get_lead_by_id(lead_id)}
+
+
+@app.post("/api/leads/bulk-status")
+async def bulk_update_status(req: BulkStatusRequest):
+    count = database.bulk_update_lead_status(req.lead_ids, req.status)
+    return {"success": True, "updated_count": count, "message": f"Updated {count} leads to {req.status}"}
+
+
+@app.post("/api/leads/bulk-delete")
+async def bulk_delete(req: BulkDeleteRequest):
+    count = database.bulk_delete_leads(req.lead_ids)
+    return {"success": True, "deleted_count": count, "message": f"Deleted {count} leads"}
+
+
+@app.get("/api/leads/{lead_id}")
+async def get_lead_details(lead_id: int):
+    lead = database.get_lead_by_id(lead_id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return lead
+
+
+@app.put("/api/leads/{lead_id}")
+async def update_lead_details(lead_id: int, req: LeadUpdateRequest):
+    data = req.dict(exclude_none=True)
+    success = database.update_lead(lead_id, data)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to update lead or no fields changed")
+    return {"success": True, "message": "Lead updated successfully", "lead": database.get_lead_by_id(lead_id)}
+
+
+@app.delete("/api/leads/{lead_id}")
+async def delete_lead_entry(lead_id: int):
+    success = database.delete_lead(lead_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return {"success": True, "message": "Lead deleted successfully"}
+
+
+@app.get("/api/admin/users")
+async def list_staff_users():
+    return {"users": database.get_all_staff()}
+
+
+@app.post("/api/admin/users")
+async def create_staff_user(req: CreateUserRequest):
+    if len(req.username.strip()) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters long")
+    if len(req.password.strip()) < 4:
+        raise HTTPException(status_code=400, detail="Password must be at least 4 characters long")
+    
+    hashed = auth.hash_password(req.password)
+    user_id = database.create_user(req.username.strip(), hashed, req.role or "staff")
+    if user_id == -1:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    return {"success": True, "user_id": user_id, "message": "User created successfully"}
+
+
+@app.delete("/api/admin/users/{user_id}")
+async def delete_staff_user(user_id: int):
+    success = database.delete_user(user_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Cannot delete this user (it may be the last remaining admin)")
+    return {"success": True, "message": "User deleted successfully"}
+
+
+@app.get("/api/admin/backup")
+async def export_backup():
+    return database.get_system_backup()
+
+
+@app.get("/api/admin/backup/download")
+async def download_backup_file():
+    import json
+    from fastapi.responses import Response
+    from datetime import datetime
+    backup_data = database.get_system_backup()
+    date_str = datetime.utcnow().strftime("%Y-%m-%d")
+    filename = f"smartquotehub_turso_backup_{date_str}.json"
+    content = json.dumps(backup_data, indent=2)
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-cache"
+        }
+    )
+
+
+@app.post("/api/admin/restore")
+async def import_backup(backup_data: dict):
+    if not backup_data or "leads" not in backup_data:
+        raise HTTPException(status_code=400, detail="Invalid backup file format")
+    result = database.restore_system_backup(backup_data)
+    return result
 
 
 @app.get("/api/health")

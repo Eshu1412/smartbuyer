@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SplashScreen from './components/SplashScreen'
 import Navbar from './components/Navbar'
@@ -12,26 +12,48 @@ import Footer from './components/Footer'
 import CategoryView from './components/CategoryView'
 import SubVerticalView from './components/SubVerticalView'
 import ThankYouView from './components/ThankYouView'
+import AdminDashboard from './components/Admin/AdminDashboard'
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false)
   const [quoteOpen, setQuoteOpen] = useState(false)
   const [selectedService, setSelectedService] = useState('')
 
-  // View state: 'home' | 'vertical' | 'sub-vertical' | 'thank-you'
+  // View state: 'home' | 'vertical' | 'sub-vertical' | 'thank-you' | 'admin'
   const [viewState, setViewState] = useState('home')
   const [activeVertical, setActiveVertical] = useState('')
   const [activeSub, setActiveSub] = useState('')
   const [submittedLead, setSubmittedLead] = useState(null)
+
+  // Listen to #admin hash or location changes
+  useEffect(() => {
+    const checkHash = () => {
+      if (window.location.hash === '#admin' || window.location.pathname === '/admin') {
+        setViewState('admin')
+      }
+    }
+    checkHash()
+    window.addEventListener('hashchange', checkHash)
+    return () => window.removeEventListener('hashchange', checkHash)
+  }, [])
 
   const handleSplashComplete = useCallback(() => {
     setSplashDone(true)
   }, [])
 
   const handleNavigateHome = () => {
+    if (window.location.hash === '#admin') {
+      window.location.hash = ''
+    }
     setViewState('home')
     setActiveVertical('')
     setActiveSub('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleNavigateAdmin = () => {
+    window.location.hash = 'admin'
+    setViewState('admin')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -61,6 +83,10 @@ export default function App() {
 
   const activeKey = `${viewState}-${activeVertical}-${activeSub}`
 
+  if (viewState === 'admin') {
+    return <AdminDashboard onNavigateHome={handleNavigateHome} />
+  }
+
   return (
     <>
       {!splashDone && <SplashScreen onComplete={handleSplashComplete} />}
@@ -81,6 +107,7 @@ export default function App() {
         onQuoteClick={() => handleOpenQuote('')}
         onNavigateHome={handleNavigateHome}
         onNavigateVertical={handleNavigateVertical}
+        onNavigateAdmin={handleNavigateAdmin}
         viewState={viewState}
         activeVertical={activeVertical}
       />
@@ -154,7 +181,10 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      <Footer onQuoteClick={() => handleOpenQuote('')} />
+      <Footer
+        onQuoteClick={() => handleOpenQuote('')}
+        onNavigateAdmin={handleNavigateAdmin}
+      />
       <QuoteForm
         isOpen={quoteOpen}
         onClose={() => setQuoteOpen(false)}

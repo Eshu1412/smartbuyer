@@ -1,8 +1,16 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { FiShield } from 'react-icons/fi'
 import './Navbar.css'
 
-export default function Navbar({ onQuoteClick, onNavigateHome, onNavigateVertical, viewState = 'home', activeVertical = '' }) {
+export default function Navbar({ 
+  onQuoteClick, 
+  onNavigateHome, 
+  onNavigateVertical, 
+  onNavigateAdmin,
+  viewState = 'home', 
+  activeVertical = '' 
+}) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -41,6 +49,16 @@ export default function Navbar({ onQuoteClick, onNavigateHome, onNavigateVertica
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const handleAdminClick = () => {
+    setMobileOpen(false)
+    if (onNavigateAdmin) {
+      onNavigateAdmin()
+    } else {
+      window.location.hash = 'admin'
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
     <motion.nav
       className={`navbar ${scrolled ? 'scrolled' : ''} ${mobileOpen ? 'mobile-open' : ''}`}
@@ -66,12 +84,22 @@ export default function Navbar({ onQuoteClick, onNavigateHome, onNavigateVertica
           ))}
         </div>
 
-        <button
-          className="btn btn-primary navbar-cta desktop-only"
-          onClick={onQuoteClick}
-        >
-          Get Free Quote
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <button
+            className="navbar-admin-btn desktop-only"
+            onClick={handleAdminClick}
+            title="Specialist & Admin Command Center"
+          >
+            <FiShield /> Admin Portal
+          </button>
+
+          <button
+            className="btn btn-primary navbar-cta desktop-only"
+            onClick={onQuoteClick}
+          >
+            Get Free Quote
+          </button>
+        </div>
 
         <button
           className={`navbar-toggle ${mobileOpen ? 'active' : ''}`}
@@ -93,6 +121,15 @@ export default function Navbar({ onQuoteClick, onNavigateHome, onNavigateVertica
               {cat.label}
             </button>
           ))}
+
+          <button 
+            className="navbar-link" 
+            style={{ color: '#60A5FA', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+            onClick={handleAdminClick}
+          >
+            <FiShield /> Admin Portal
+          </button>
+
           <button className="btn btn-primary" onClick={() => { setMobileOpen(false); onQuoteClick() }}>
             Get Free Quote
           </button>
@@ -101,4 +138,3 @@ export default function Navbar({ onQuoteClick, onNavigateHome, onNavigateVertica
     </motion.nav>
   )
 }
-

@@ -11,3 +11,7 @@ services:
         value: 8080
       - key: TRUSTEDFORM_API_KEY
         value: YOUR_TRUSTEDFORM_API_KEY
+      - key: TURSO_DATABASE_URL
+        value: libsql://YOUR_TURSO_DATABASE_HOST
+      - key: TURSO_AUTH_TOKEN
+        value: YOUR_TURSO_AUTH_TOKEN
