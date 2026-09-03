@@ -118,6 +118,8 @@ class LeadUpdateRequest(BaseModel):
     phone: Optional[str] = None
     zip_code: Optional[str] = None
     service_type: Optional[str] = None
+    annual_income_range: Optional[str] = None
+    current_provider: Optional[str] = None
 
 class BulkStatusRequest(BaseModel):
     lead_ids: list[int]

@@ -678,6 +678,72 @@ def delete_user(user_id: int):
     return deleted
 
 
+def update_user(user_id: int, data: dict):
+    """Update a user's username, password_hash, and/or role."""
+    fields = []
+    params = []
+    for key in ["username", "password_hash", "role"]:
+        if key in data:
+            fields.append(f"{key} = ?")
+            params.append(data[key])
+
+    if not fields:
+        return False
+
+    params.append(user_id)
+    sql = f"UPDATE users SET {', '.join(fields)} WHERE id = ?"
+
+    if USE_TURSO:
+        try:
+            # Safety: prevent demoting the last admin
+            if "role" in data and data["role"] != "admin":
+                rows, _, _ = query_turso("SELECT role FROM users WHERE id = ?", [user_id])
+                if rows and rows[0].get("role") == "admin":
+                    adm_rows, _, _ = query_turso("SELECT COUNT(*) as count FROM users WHERE role = 'admin'")
+                    if adm_rows and adm_rows[0].get("count", 0) <= 1:
+                        return "last_admin"
+
+            # Check for duplicate username
+            if "username" in data:
+                dup_rows, _, _ = query_turso(
+                    "SELECT id FROM users WHERE username = ? AND id != ?",
+                    [data["username"], user_id]
+                )
+                if dup_rows:
+                    return "duplicate"
+
+            _, affected, _ = query_turso(sql, params)
+            return affected > 0
+        except Exception as e:
+            print(f"[DB] Turso update_user fallback ({e})")
+
+    conn = get_local_db()
+    cursor = conn.cursor()
+
+    # Safety: prevent demoting the last admin
+    if "role" in data and data["role"] != "admin":
+        cursor.execute("SELECT role FROM users WHERE id = ?", (user_id,))
+        row = cursor.fetchone()
+        if row and row["role"] == "admin":
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
+            if cursor.fetchone()[0] <= 1:
+                conn.close()
+                return "last_admin"
+
+    # Check for duplicate username
+    if "username" in data:
+        cursor.execute("SELECT id FROM users WHERE username = ? AND id != ?", (data["username"], user_id))
+        if cursor.fetchone():
+            conn.close()
+            return "duplicate"
+
+    cursor.execute(sql, params)
+    conn.commit()
+    updated = cursor.rowcount > 0
+    conn.close()
+    return updated
+
+
 # ── System Backup & Restore ──────────────────────────
 
 def get_system_backup() -> dict:

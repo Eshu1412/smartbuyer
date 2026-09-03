@@ -35,6 +35,11 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
   const [showAddModal, setShowAddModal] = useState(false);
   const [copiedField, setCopiedField] = useState('');
 
+  // Edit Lead State
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editFormData, setEditFormData] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
+
   // Add Lead Form State
   const [newLead, setNewLead] = useState({
     first_name: '',
@@ -44,7 +49,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
     zip_code: '',
     service_type: 'Health Insurance',
     status: 'new',
-    annual_income_range: '$60k-$90k',
+    annual_income_range: '',
     current_provider: '',
     notes: ''
   });
@@ -189,6 +194,52 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
     }
   };
 
+  // Enter Edit Mode
+  const enterEditMode = (lead) => {
+    setEditFormData({
+      first_name: lead.first_name || '',
+      last_name: lead.last_name || '',
+      email: lead.email || '',
+      phone: lead.phone || '',
+      zip_code: lead.zip_code || '',
+      service_type: lead.service_type || 'Health Insurance',
+      status: lead.status || 'new',
+      current_provider: lead.current_provider || '',
+      annual_income_range: lead.annual_income_range || '',
+      notes: lead.notes || ''
+    });
+    setIsEditMode(true);
+  };
+
+  // Save Edited Lead
+  const handleSaveEdit = async () => {
+    if (!selectedLead) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/leads/${selectedLead.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editFormData),
+      });
+      if (res.ok) {
+        const updatedData = await res.json();
+        setSelectedLead(updatedData.lead);
+        setEditedNotes(updatedData.lead.notes || '');
+        setIsEditMode(false);
+        if (onShowSnackbar) onShowSnackbar('Lead updated successfully', 'success');
+        fetchLeads();
+        if (onUpdateRefresh) onUpdateRefresh();
+      } else {
+        if (onShowSnackbar) onShowSnackbar('Failed to update lead', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to save lead edits:', err);
+      if (onShowSnackbar) onShowSnackbar('Error saving lead', 'error');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   // Delete Single Lead
   const handleDeleteConfirm = async () => {
     if (!leadToDelete) return;
@@ -227,7 +278,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
           zip_code: '',
           service_type: 'Health Insurance',
           status: 'new',
-          annual_income_range: '$60k-$90k',
+          annual_income_range: '',
           current_provider: '',
           notes: ''
         });
@@ -519,9 +570,21 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                             onClick={() => {
                               setSelectedLead(lead);
                               setEditedNotes(lead.notes || '');
+                              setIsEditMode(false);
                             }}
                           >
                             <FiEye />
+                          </button>
+                          <button
+                            className="admin-action-btn"
+                            title="Edit Lead"
+                            onClick={() => {
+                              setSelectedLead(lead);
+                              setEditedNotes(lead.notes || '');
+                              enterEditMode(lead);
+                            }}
+                          >
+                            <FiEdit3 />
                           </button>
                           <button
                             className="admin-action-btn delete"
@@ -716,7 +779,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
         </div>
       )}
 
-      {/* Lead Details Inspection Modal */}
+      {/* Lead Details Inspection / Edit Modal */}
       <AnimatePresence>
         {selectedLead && (
           <div className="admin-modal-overlay">
@@ -728,143 +791,317 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
             >
               <div className="admin-modal-header">
                 <div>
-                  <h3 className="admin-modal-title">Lead #{selectedLead.id} Profile</h3>
+                  <h3 className="admin-modal-title">
+                    {isEditMode ? '✏️ Edit' : ''} Lead #{selectedLead.id} Profile
+                  </h3>
                   <span style={{ color: 'var(--md-primary)', fontSize: '0.85rem', fontWeight: 600 }}>
                     Captured on {new Date(selectedLead.created_at).toLocaleString()}
                   </span>
                 </div>
-                <button className="admin-modal-close" onClick={() => setSelectedLead(null)}>
-                  <FiX />
-                </button>
-              </div>
-
-              {/* Quick Contact Action Bar */}
-              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-                <a 
-                  href={`mailto:${selectedLead.email}`} 
-                  className="admin-btn-secondary"
-                  style={{ fontSize: '0.85rem' }}
-                >
-                  <FiMail /> Send Email
-                </a>
-                <a 
-                  href={`tel:${selectedLead.phone}`} 
-                  className="admin-btn-secondary"
-                  style={{ fontSize: '0.85rem' }}
-                >
-                  <FiPhone /> Call Phone
-                </a>
-                <button 
-                  className="admin-btn-secondary"
-                  style={{ fontSize: '0.85rem' }}
-                  onClick={() => copyToClipboard(`${selectedLead.first_name} ${selectedLead.last_name}\n${selectedLead.email}\n${selectedLead.phone}\nZip: ${selectedLead.zip_code}`, 'Full Lead Info')}
-                >
-                  {copiedField === 'Full Lead Info' ? <FiCheck style={{ color: '#10b981' }} /> : <FiCopy />} Copy Details
-                </button>
-              </div>
-
-              <div className="admin-detail-grid">
-                <div className="admin-detail-item">
-                  <div className="admin-detail-label">Customer Name</div>
-                  <div className="admin-detail-value">{selectedLead.first_name} {selectedLead.last_name}</div>
-                </div>
-                <div className="admin-detail-item">
-                  <div className="admin-detail-label">Service Vertical</div>
-                  <div className="admin-detail-value" style={{ color: 'var(--md-primary)' }}>{selectedLead.service_type}</div>
-                </div>
-                <div className="admin-detail-item">
-                  <div className="admin-detail-label">Email Address</div>
-                  <div className="admin-detail-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>{selectedLead.email}</span>
-                    <button 
-                      style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--md-on-surface-variant)' }}
-                      onClick={() => copyToClipboard(selectedLead.email, 'Email')}
-                    >
-                      <FiCopy />
-                    </button>
-                  </div>
-                </div>
-                <div className="admin-detail-item">
-                  <div className="admin-detail-label">Phone Number</div>
-                  <div className="admin-detail-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>{selectedLead.phone}</span>
-                    <button 
-                      style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--md-on-surface-variant)' }}
-                      onClick={() => copyToClipboard(selectedLead.phone, 'Phone')}
-                    >
-                      <FiCopy />
-                    </button>
-                  </div>
-                </div>
-                <div className="admin-detail-item">
-                  <div className="admin-detail-label">Zip Code</div>
-                  <div className="admin-detail-value">{selectedLead.zip_code}</div>
-                </div>
-                <div className="admin-detail-item">
-                  <div className="admin-detail-label">Date of Birth</div>
-                  <div className="admin-detail-value">{selectedLead.date_of_birth || 'N/A'}</div>
-                </div>
-                <div className="admin-detail-item">
-                  <div className="admin-detail-label">Current Provider</div>
-                  <div className="admin-detail-value">{selectedLead.current_provider || 'None / First Time'}</div>
-                </div>
-                <div className="admin-detail-item">
-                  <div className="admin-detail-label">Income Range</div>
-                  <div className="admin-detail-value">{selectedLead.annual_income_range || 'Not specified'}</div>
-                </div>
-              </div>
-
-              {/* TrustedForm Verification */}
-              <div className="admin-detail-item" style={{ marginBottom: '1.5rem', background: 'var(--md-primary-container)', borderColor: 'var(--md-outline)' }}>
-                <div className="admin-detail-label" style={{ color: 'var(--md-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <FiShield /> ActiveProspect TrustedForm TCPA Certification
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div>
-                    <span style={{ fontSize: '0.88rem', color: 'var(--md-on-surface)' }}>
-                      Retention Status: <strong>{selectedLead.trusted_form_retained ? 'Retained & Verified' : 'Standard Submission'}</strong>
-                    </span>
-                    {selectedLead.trusted_form_cert_id && (
-                      <div style={{ fontSize: '0.8rem', color: 'var(--md-on-surface-variant)', marginTop: '0.2rem' }}>
-                        Certificate ID: {selectedLead.trusted_form_cert_id}
-                      </div>
-                    )}
-                  </div>
-                  {selectedLead.trusted_form_cert_url && (
-                    <a
-                      href={selectedLead.trusted_form_cert_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {!isEditMode && (
+                    <button
                       className="admin-btn-secondary"
-                      style={{ fontSize: '0.82rem', padding: '0.4rem 0.8rem' }}
+                      style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
+                      onClick={() => enterEditMode(selectedLead)}
+                      title="Edit Lead"
                     >
-                      Inspect Certificate <FiExternalLink />
-                    </a>
+                      <FiEdit3 /> Edit
+                    </button>
                   )}
+                  <button className="admin-modal-close" onClick={() => { setSelectedLead(null); setIsEditMode(false); }}>
+                    <FiX />
+                  </button>
                 </div>
               </div>
 
-              {/* Internal Notes */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label className="admin-form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <FiEdit3 /> Internal Qualification & Agent Notes
-                </label>
-                <textarea
-                  className="admin-notes-textarea"
-                  placeholder="Record interaction notes, quotes delivered, follow-up schedule..."
-                  value={editedNotes}
-                  onChange={(e) => setEditedNotes(e.target.value)}
-                />
-              </div>
+              {/* --- EDIT MODE --- */}
+              {isEditMode ? (
+                <>
+                  <div style={{ 
+                    display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                    padding: '0.6rem 1rem', marginBottom: '1.25rem',
+                    background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.08))',
+                    borderRadius: '0.75rem', border: '1px solid rgba(99,102,241,0.2)',
+                    fontSize: '0.85rem', color: 'var(--md-primary)', fontWeight: 600
+                  }}>
+                    <FiEdit3 /> You are editing this lead record. Changes are saved when you click "Save Changes".
+                  </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                <button className="admin-btn-secondary" onClick={() => setSelectedLead(null)}>
-                  Close
-                </button>
-                <button className="admin-btn-primary" onClick={handleSaveNotes} disabled={savingNotes}>
-                  <FiSave /> {savingNotes ? 'Saving...' : 'Save Notes'}
-                </button>
-              </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">First Name</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        style={{ paddingLeft: '1rem' }}
+                        value={editFormData.first_name}
+                        onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Last Name</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        style={{ paddingLeft: '1rem' }}
+                        value={editFormData.last_name}
+                        onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Email Address</label>
+                      <input
+                        type="email"
+                        className="admin-input"
+                        style={{ paddingLeft: '1rem' }}
+                        value={editFormData.email}
+                        onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Phone Number</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        style={{ paddingLeft: '1rem' }}
+                        value={editFormData.phone}
+                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Service Vertical</label>
+                      <select
+                        className="admin-select"
+                        style={{ width: '100%' }}
+                        value={editFormData.service_type}
+                        onChange={(e) => setEditFormData({ ...editFormData, service_type: e.target.value })}
+                      >
+                        <option value="Health Insurance">Health Insurance</option>
+                        <option value="Home Improvement">Home Improvement</option>
+                        <option value="Auto & Home Insurance">Auto & Home Insurance</option>
+                        <option value="Debt Relief">Debt Relief</option>
+                        <option value="Legal Help">Legal Help</option>
+                        <option value="Medicare">Medicare</option>
+                      </select>
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Zip Code</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        style={{ paddingLeft: '1rem' }}
+                        value={editFormData.zip_code}
+                        onChange={(e) => setEditFormData({ ...editFormData, zip_code: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Status</label>
+                      <select
+                        className="admin-select"
+                        style={{ width: '100%' }}
+                        value={editFormData.status}
+                        onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                      >
+                        <option value="new">NEW</option>
+                        <option value="contacted">CONTACTED</option>
+                        <option value="qualified">QUALIFIED</option>
+                        <option value="closed">CLOSED</option>
+                      </select>
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Current Provider</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        style={{ paddingLeft: '1rem' }}
+                        placeholder="e.g. Aetna, State Farm..."
+                        value={editFormData.current_provider}
+                        onChange={(e) => setEditFormData({ ...editFormData, current_provider: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="admin-form-group" style={{ marginBottom: '1rem' }}>
+                    <label className="admin-form-label">Income Range</label>
+                    <select
+                      className="admin-select"
+                      style={{ width: '100%' }}
+                      value={editFormData.annual_income_range}
+                      onChange={(e) => setEditFormData({ ...editFormData, annual_income_range: e.target.value })}
+                    >
+                      <option value="">Not specified</option>
+                      <option value="Under $20k">Under $20k</option>
+                      <option value="$20k - $40k">$20k - $40k</option>
+                      <option value="$40k - $60k">$40k - $60k</option>
+                      <option value="$60k - $90k">$60k - $90k</option>
+                      <option value="$90k - $120k">$90k - $120k</option>
+                      <option value="Over $120k">Over $120k</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-form-group" style={{ marginBottom: '1.5rem' }}>
+                    <label className="admin-form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <FiEdit3 /> Internal Notes
+                    </label>
+                    <textarea
+                      className="admin-notes-textarea"
+                      placeholder="Record interaction notes, quotes delivered, follow-up schedule..."
+                      value={editFormData.notes}
+                      onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                    <button className="admin-btn-secondary" onClick={() => setIsEditMode(false)}>
+                      Cancel Edit
+                    </button>
+                    <button className="admin-btn-primary" onClick={handleSaveEdit} disabled={savingEdit}>
+                      <FiSave /> {savingEdit ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                /* --- VIEW MODE (original) --- */
+                <>
+                  {/* Quick Contact Action Bar */}
+                  <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                    <a 
+                      href={`mailto:${selectedLead.email}`} 
+                      className="admin-btn-secondary"
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      <FiMail /> Send Email
+                    </a>
+                    <a 
+                      href={`tel:${selectedLead.phone}`} 
+                      className="admin-btn-secondary"
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      <FiPhone /> Call Phone
+                    </a>
+                    <button 
+                      className="admin-btn-secondary"
+                      style={{ fontSize: '0.85rem' }}
+                      onClick={() => copyToClipboard(`${selectedLead.first_name} ${selectedLead.last_name}\n${selectedLead.email}\n${selectedLead.phone}\nZip: ${selectedLead.zip_code}`, 'Full Lead Info')}
+                    >
+                      {copiedField === 'Full Lead Info' ? <FiCheck style={{ color: '#10b981' }} /> : <FiCopy />} Copy Details
+                    </button>
+                  </div>
+
+                  <div className="admin-detail-grid">
+                    <div className="admin-detail-item">
+                      <div className="admin-detail-label">Customer Name</div>
+                      <div className="admin-detail-value">{selectedLead.first_name} {selectedLead.last_name}</div>
+                    </div>
+                    <div className="admin-detail-item">
+                      <div className="admin-detail-label">Service Vertical</div>
+                      <div className="admin-detail-value" style={{ color: 'var(--md-primary)' }}>{selectedLead.service_type}</div>
+                    </div>
+                    <div className="admin-detail-item">
+                      <div className="admin-detail-label">Email Address</div>
+                      <div className="admin-detail-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>{selectedLead.email}</span>
+                        <button 
+                          style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--md-on-surface-variant)' }}
+                          onClick={() => copyToClipboard(selectedLead.email, 'Email')}
+                        >
+                          <FiCopy />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="admin-detail-item">
+                      <div className="admin-detail-label">Phone Number</div>
+                      <div className="admin-detail-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>{selectedLead.phone}</span>
+                        <button 
+                          style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--md-on-surface-variant)' }}
+                          onClick={() => copyToClipboard(selectedLead.phone, 'Phone')}
+                        >
+                          <FiCopy />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="admin-detail-item">
+                      <div className="admin-detail-label">Zip Code</div>
+                      <div className="admin-detail-value">{selectedLead.zip_code}</div>
+                    </div>
+                    <div className="admin-detail-item">
+                      <div className="admin-detail-label">Date of Birth</div>
+                      <div className="admin-detail-value">{selectedLead.date_of_birth || 'N/A'}</div>
+                    </div>
+                    <div className="admin-detail-item">
+                      <div className="admin-detail-label">Current Provider</div>
+                      <div className="admin-detail-value">{selectedLead.current_provider || 'None / First Time'}</div>
+                    </div>
+                    <div className="admin-detail-item">
+                      <div className="admin-detail-label">Income Range</div>
+                      <div className="admin-detail-value">{selectedLead.annual_income_range || 'Not specified'}</div>
+                    </div>
+                  </div>
+
+                  {/* TrustedForm Verification */}
+                  <div className="admin-detail-item" style={{ marginBottom: '1.5rem', background: 'var(--md-primary-container)', borderColor: 'var(--md-outline)' }}>
+                    <div className="admin-detail-label" style={{ color: 'var(--md-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <FiShield /> ActiveProspect TrustedForm TCPA Certification
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div>
+                        <span style={{ fontSize: '0.88rem', color: 'var(--md-on-surface)' }}>
+                          Retention Status: <strong>{selectedLead.trusted_form_retained ? 'Retained & Verified' : 'Standard Submission'}</strong>
+                        </span>
+                        {selectedLead.trusted_form_cert_id && (
+                          <div style={{ fontSize: '0.8rem', color: 'var(--md-on-surface-variant)', marginTop: '0.2rem' }}>
+                            Certificate ID: {selectedLead.trusted_form_cert_id}
+                          </div>
+                        )}
+                      </div>
+                      {selectedLead.trusted_form_cert_url && (
+                        <a
+                          href={selectedLead.trusted_form_cert_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="admin-btn-secondary"
+                          style={{ fontSize: '0.82rem', padding: '0.4rem 0.8rem' }}
+                        >
+                          Inspect Certificate <FiExternalLink />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Internal Notes */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label className="admin-form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <FiEdit3 /> Internal Qualification & Agent Notes
+                    </label>
+                    <textarea
+                      className="admin-notes-textarea"
+                      placeholder="Record interaction notes, quotes delivered, follow-up schedule..."
+                      value={editedNotes}
+                      onChange={(e) => setEditedNotes(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                    <button className="admin-btn-secondary" onClick={() => setSelectedLead(null)}>
+                      Close
+                    </button>
+                    <button className="admin-btn-primary" onClick={handleSaveNotes} disabled={savingNotes}>
+                      <FiSave /> {savingNotes ? 'Saving...' : 'Save Notes'}
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         )}
@@ -969,6 +1206,37 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                       value={newLead.zip_code}
                       onChange={(e) => setNewLead({ ...newLead, zip_code: e.target.value })}
                       required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Income Range</label>
+                    <select
+                      className="admin-select"
+                      style={{ width: '100%' }}
+                      value={newLead.annual_income_range}
+                      onChange={(e) => setNewLead({ ...newLead, annual_income_range: e.target.value })}
+                    >
+                      <option value="">Not specified</option>
+                      <option value="Under $20k">Under $20k</option>
+                      <option value="$20k - $40k">$20k - $40k</option>
+                      <option value="$40k - $60k">$40k - $60k</option>
+                      <option value="$60k - $90k">$60k - $90k</option>
+                      <option value="$90k - $120k">$90k - $120k</option>
+                      <option value="Over $120k">Over $120k</option>
+                    </select>
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Current Provider</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      style={{ paddingLeft: '1rem' }}
+                      placeholder="e.g. Aetna, State Farm..."
+                      value={newLead.current_provider}
+                      onChange={(e) => setNewLead({ ...newLead, current_provider: e.target.value })}
                     />
                   </div>
                 </div>
