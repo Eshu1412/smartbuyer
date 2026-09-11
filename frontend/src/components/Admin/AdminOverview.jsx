@@ -50,6 +50,7 @@ export default function AdminOverview({ stats, onNavigateToLeads, onFilterByServ
     'Debt Relief': '#EF4444',
     'Legal Help': '#8B5CF6',
     'Medicare': '#0891B2',
+    'Flight Booking': '#2563EB',
   };
 
   const defaultColor = '#2563EB';

@@ -147,6 +147,28 @@ class CreateUserRequest(BaseModel):
     role: Optional[str] = "staff"
 
 
+class FlightBookingRequest(BaseModel):
+    full_name: str
+    email: str
+    phone: str
+    trip_type: str  # 'One Way' or 'Round Trip'
+    departure: Optional[str] = ""
+    destination: Optional[str] = ""
+    departure_city: Optional[str] = ""
+    destination_city: Optional[str] = ""
+    address: Optional[str] = ""
+    state: Optional[str] = ""
+    zip_code: Optional[str] = ""
+    notes: Optional[str] = ""
+
+
+class FlightBookingUpdateRequest(BaseModel):
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    departure_city: Optional[str] = None
+    destination_city: Optional[str] = None
+    trip_type: Optional[str] = None
+
 
 # ── Data ────────────────────────────────────────────────
 SERVICES = [
@@ -191,6 +213,13 @@ SERVICES = [
         "description": "Navigate Medicare plans with confidence. Compare Medicare Advantage, Supplement, and Part D options.",
         "icon": "medicare",
         "color": "#00b894",
+    },
+    {
+        "id": 7,
+        "title": "Flight Booking",
+        "description": "Compare discounted airfares, book domestic and international flights, and explore exclusive travel deals.",
+        "icon": "travel",
+        "color": "#2563eb",
     },
 ]
 
@@ -490,6 +519,139 @@ async def delete_lead_entry(lead_id: int):
     if not success:
         raise HTTPException(status_code=404, detail="Lead not found")
     return {"success": True, "message": "Lead deleted successfully"}
+
+
+# ── Flight Bookings API ─────────────────────────────────
+
+@app.post("/api/travel/flight-booking")
+async def submit_flight_booking(req: FlightBookingRequest):
+    # Validate required fields
+    if not req.full_name.strip():
+        raise HTTPException(status_code=400, detail="Full Name is required")
+    if not req.email.strip():
+        raise HTTPException(status_code=400, detail="Email Address is required")
+    if not req.phone.strip():
+        raise HTTPException(status_code=400, detail="Phone Number is required")
+    
+    departure = (req.departure or req.departure_city or "").strip()
+    destination = (req.destination or req.destination_city or "").strip()
+    if not departure:
+        raise HTTPException(status_code=400, detail="Departure is required")
+    if not destination:
+        raise HTTPException(status_code=400, detail="Destination is required")
+
+    address = (req.address or "").strip()
+    state = (req.state or "").strip()
+    zip_code = (req.zip_code or "").strip()
+
+    booking_id = database.create_flight_booking({
+        "full_name": req.full_name.strip(),
+        "email": req.email.strip(),
+        "phone": req.phone.strip(),
+        "trip_type": req.trip_type or "Round Trip",
+        "departure": departure,
+        "destination": destination,
+        "departure_city": departure,
+        "destination_city": destination,
+        "address": address,
+        "state": state,
+        "zip_code": zip_code,
+        "status": "new",
+        "notes": req.notes or ""
+    })
+
+    # Also mirror into leads table for unified staff visibility
+    name_parts = req.full_name.strip().split(" ", 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+    flight_notes = f"Trip Type: {req.trip_type} | Route: {departure} -> {destination}"
+    if address:
+        flight_notes += f" | Address: {address}"
+    if state:
+        flight_notes += f" | State: {state}"
+    if zip_code:
+        flight_notes += f" | Zip: {zip_code}"
+    if req.notes:
+        flight_notes += f"\nCustomer Notes: {req.notes}"
+
+    try:
+        database.create_lead({
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": req.email.strip(),
+            "phone": req.phone.strip(),
+            "zip_code": zip_code or departure[:10],
+            "date_of_birth": "",
+            "service_type": "Flight Booking",
+            "current_provider": "Flight Desk",
+            "household_size": "1",
+            "annual_income_range": "",
+            "consent": True,
+            "trusted_form_cert_url": "",
+            "trusted_form_retained": False,
+            "trusted_form_cert_id": "",
+            "status": "new",
+            "notes": flight_notes,
+        })
+    except Exception as e:
+        print(f"[API] Warning: Failed to mirror flight booking into leads: {e}")
+
+    booking = database.get_flight_booking_by_id(booking_id)
+
+    return {
+        "success": True,
+        "booking_id": booking_id,
+        "booking": booking,
+        "message": f"Thank you, {req.full_name}! Your flight booking request from {departure} to {destination} has been received. Our flight desk will send your fare options shortly."
+    }
+
+
+@app.get("/api/travel/flight-bookings")
+async def list_flight_bookings(
+    search: str = "",
+    status: str = "",
+    page: int = 1,
+    per_page: int = 20,
+    sort_by: str = "created_at",
+    sort_order: str = "desc"
+):
+    return database.get_flight_bookings(
+        search=search,
+        status=status,
+        page=page,
+        per_page=per_page,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
+
+
+@app.get("/api/travel/flight-bookings/{booking_id}")
+async def get_flight_booking(booking_id: int):
+    booking = database.get_flight_booking_by_id(booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Flight booking not found")
+    return booking
+
+
+@app.put("/api/travel/flight-bookings/{booking_id}")
+async def update_flight_booking_entry(booking_id: int, req: FlightBookingUpdateRequest):
+    data = req.dict(exclude_none=True)
+    success = database.update_flight_booking(booking_id, data)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to update flight booking or no fields changed")
+    return {
+        "success": True,
+        "message": "Flight booking updated successfully",
+        "booking": database.get_flight_booking_by_id(booking_id)
+    }
+
+
+@app.delete("/api/travel/flight-bookings/{booking_id}")
+async def delete_flight_booking_entry(booking_id: int):
+    success = database.delete_flight_booking(booking_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Flight booking not found")
+    return {"success": True, "message": "Flight booking deleted successfully"}
 
 
 @app.get("/api/admin/users")

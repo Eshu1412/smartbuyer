@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { FaHome, FaChevronRight, FaArrowRight, FaHeartbeat, FaShieldAlt, FaHammer, FaHandHoldingUsd, FaGavel, FaStethoscope, FaHeart, FaFileAlt, FaCar, FaHome as FaHomeIcon, FaLayerGroup, FaTint, FaThermometerHalf, FaWindowMaximize, FaBath, FaBug, FaWater, FaWrench, FaTools, FaBroom, FaTree, FaChartLine, FaMoneyBillWave, FaCarCrash, FaUserNurse } from 'react-icons/fa'
+import { FaHome, FaChevronRight, FaArrowRight, FaHeartbeat, FaShieldAlt, FaHammer, FaHandHoldingUsd, FaGavel, FaStethoscope, FaHeart, FaFileAlt, FaCar, FaHome as FaHomeIcon, FaLayerGroup, FaTint, FaThermometerHalf, FaWindowMaximize, FaBath, FaBug, FaWater, FaWrench, FaTools, FaBroom, FaTree, FaChartLine, FaMoneyBillWave, FaCarCrash, FaUserNurse, FaPlane, FaPlaneDeparture, FaSuitcase } from 'react-icons/fa'
 import { servicesDb } from '../data/servicesData'
 import './CategoryView.css'
 
@@ -29,6 +29,9 @@ const iconMap = {
   FaMoneyBillWave,
   FaCarCrash,
   FaUserNurse,
+  FaPlane,
+  FaPlaneDeparture,
+  FaSuitcase,
   FaActivity: FaHeartbeat
 }
 

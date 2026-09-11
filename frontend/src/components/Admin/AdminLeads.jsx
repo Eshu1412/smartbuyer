@@ -397,6 +397,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
             <option value="Debt Relief">Debt Relief</option>
             <option value="Legal Help">Legal Help</option>
             <option value="Medicare">Medicare</option>
+            <option value="Flight Booking">Flight Booking</option>
           </select>
 
           {/* View Mode Toggle (Table / Kanban) */}
@@ -889,6 +890,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                         <option value="Debt Relief">Debt Relief</option>
                         <option value="Legal Help">Legal Help</option>
                         <option value="Medicare">Medicare</option>
+                        <option value="Flight Booking">Flight Booking</option>
                       </select>
                     </div>
                     <div className="admin-form-group">
@@ -1194,6 +1196,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                       <option value="Debt Relief">Debt Relief</option>
                       <option value="Legal Help">Legal Help</option>
                       <option value="Medicare">Medicare</option>
+                      <option value="Flight Booking">Flight Booking</option>
                     </select>
                   </div>
                   <div className="admin-form-group">

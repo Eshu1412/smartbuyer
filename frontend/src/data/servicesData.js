@@ -537,5 +537,51 @@ export const servicesDb = {
         ]
       }
     }
+  },
+  "travel": {
+    id: "travel",
+    title: "Flight Booking",
+    icon: "FaPlane",
+    description: "Compare airfares, book domestic & international flights, and explore exclusive holiday travel packages.",
+    subs: {
+      "flights": {
+        title: "Flight Booking & Airfare",
+        desc: "Compare low fares across leading domestic and international airlines.",
+        icon: "FaPlaneDeparture",
+        plans: [
+          {
+            name: "Economy Saver",
+            price: "Best Value",
+            detail: "Budget-friendly airfare with standard seat selection and carry-on allowances.",
+            features: ["Free standard carry-on", "Instant digital itinerary", "Flexible cancellation options"]
+          },
+          {
+            name: "Premium / Business Class",
+            price: "Maximum Comfort",
+            detail: "Priority boarding, extra legroom, gourmet in-flight meals, and lounge access.",
+            features: ["Priority check-in & boarding", "Complimentary lounge passes", "2 checked bags included"]
+          }
+        ],
+        form: [
+          { type: "select", name: "trip_type", label: "Trip Type", options: ["Round Trip", "One Way"] }
+        ]
+      },
+      "travel-packages": {
+        title: "Vacation Packages",
+        desc: "Bundle flights and premium hotel stays for up to 30% savings on dream destinations.",
+        icon: "FaSuitcase",
+        plans: [
+          {
+            name: "Flight + Hotel Bundle",
+            price: "Save up to 30%",
+            detail: "Curated resorts and boutique hotels paired with premier airline schedules.",
+            features: ["Airport transfers included", "Price drop guarantee", "24/7 travel concierge"]
+          }
+        ],
+        form: [
+          { type: "select", name: "package_type", label: "Trip Style?", options: ["Beach & Resort", "City Break", "Adventure & Nature", "Family Vacation"] }
+        ]
+      }
+    }
   }
 }

@@ -191,12 +191,38 @@ def init_db():
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
     """
+    create_flight_bookings_sql = """
+        CREATE TABLE IF NOT EXISTS flight_bookings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            trip_type TEXT NOT NULL,
+            departure TEXT DEFAULT '',
+            destination TEXT DEFAULT '',
+            departure_city TEXT DEFAULT '',
+            destination_city TEXT DEFAULT '',
+            address TEXT DEFAULT '',
+            state TEXT DEFAULT '',
+            zip_code TEXT DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'new' CHECK(status IN ('new', 'contacted', 'booked', 'cancelled')),
+            notes TEXT DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+    """
 
     if USE_TURSO:
         try:
-            batch_query_turso([create_users_sql, create_leads_sql])
+            batch_query_turso([create_users_sql, create_leads_sql, create_flight_bookings_sql])
             print(f"[DB] Turso Database connected & initialized: {TURSO_DB_URL}")
             
+            # Ensure columns exist on Turso if table already existed
+            for col in ["departure", "destination", "address", "state", "zip_code"]:
+                try:
+                    query_turso(f"ALTER TABLE flight_bookings ADD COLUMN {col} TEXT DEFAULT ''")
+                except Exception:
+                    pass
+
             # Check for default admin
             rows, _, _ = query_turso("SELECT COUNT(*) as count FROM users WHERE role = 'admin'")
             if not rows or rows[0].get("count", 0) == 0:
@@ -220,6 +246,13 @@ def init_db():
     cursor = conn.cursor()
     cursor.execute(create_users_sql)
     cursor.execute(create_leads_sql)
+    cursor.execute(create_flight_bookings_sql)
+    # Ensure columns exist on local SQLite if table was created previously
+    for col in ["departure", "destination", "address", "state", "zip_code"]:
+        try:
+            cursor.execute(f"ALTER TABLE flight_bookings ADD COLUMN {col} TEXT DEFAULT ''")
+        except Exception:
+            pass
     cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
     if cursor.fetchone()[0] == 0:
         from auth import hash_password
@@ -588,6 +621,191 @@ def delete_lead(lead_id: int):
     return deleted
 
 
+# ── Flight Booking CRUD ──────────────────────────────
+
+def create_flight_booking(data: dict) -> int:
+    departure = data.get("departure") or data.get("departure_city", "")
+    destination = data.get("destination") or data.get("destination_city", "")
+    sql = """
+        INSERT INTO flight_bookings (
+            full_name, email, phone, trip_type,
+            departure, destination, departure_city, destination_city,
+            address, state, zip_code,
+            status, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+    params = [
+        data["full_name"],
+        data["email"],
+        data["phone"],
+        data.get("trip_type", "Round Trip"),
+        departure,
+        destination,
+        departure,
+        destination,
+        data.get("address", ""),
+        data.get("state", ""),
+        data.get("zip_code", ""),
+        data.get("status", "new"),
+        data.get("notes", "")
+    ]
+
+    if USE_TURSO:
+        try:
+            _, _, last_id = query_turso(sql, params)
+            return last_id or 1
+        except Exception as e:
+            print(f"[DB] Turso create_flight_booking fallback to SQLite ({e})")
+
+    conn = get_local_db()
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    booking_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return booking_id
+
+
+def get_flight_bookings(
+    search: str = "",
+    status: str = "",
+    page: int = 1,
+    per_page: int = 20,
+    sort_by: str = "created_at",
+    sort_order: str = "desc"
+):
+    conditions = []
+    params = []
+
+    if search:
+        conditions.append(
+            "(full_name LIKE ? OR email LIKE ? OR phone LIKE ? OR departure LIKE ? OR destination LIKE ? OR address LIKE ?)"
+        )
+        s = f"%{search}%"
+        params.extend([s, s, s, s, s, s])
+
+    if status and status != "all":
+        conditions.append("status = ?")
+        params.append(status)
+
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
+    valid_sort_cols = {
+        "created_at": "created_at",
+        "full_name": "full_name",
+        "departure_city": "departure_city",
+        "destination_city": "destination_city",
+        "status": "status",
+        "email": "email"
+    }
+    order_col = valid_sort_cols.get(sort_by, "created_at")
+    order_dir = "ASC" if sort_order.lower() == "asc" else "DESC"
+    offset = (page - 1) * per_page
+
+    if USE_TURSO:
+        try:
+            results = batch_query_turso([
+                {"sql": f"SELECT COUNT(*) as count FROM flight_bookings {where}", "params": params},
+                {"sql": f"SELECT * FROM flight_bookings {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?", "params": params + [per_page, offset]}
+            ])
+            count_rows = results[0]
+            rows = results[1]
+            total = count_rows[0].get("count", 0) if count_rows else 0
+            return {
+                "bookings": rows,
+                "total": total,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": max(1, (total + per_page - 1) // per_page),
+            }
+        except Exception as e:
+            print(f"[DB] Turso get_flight_bookings fallback ({e})")
+
+    conn = get_local_db()
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT COUNT(*) FROM flight_bookings {where}", params)
+    total = cursor.fetchone()[0]
+
+    cursor.execute(
+        f"SELECT * FROM flight_bookings {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?",
+        params + [per_page, offset],
+    )
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+
+    return {
+        "bookings": rows,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": max(1, (total + per_page - 1) // per_page),
+    }
+
+
+def get_flight_booking_by_id(booking_id: int):
+    if USE_TURSO:
+        try:
+            rows, _, _ = query_turso("SELECT * FROM flight_bookings WHERE id = ?", [booking_id])
+            return rows[0] if rows else None
+        except Exception as e:
+            print(f"[DB] Turso get_flight_booking_by_id fallback ({e})")
+
+    conn = get_local_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM flight_bookings WHERE id = ?", (booking_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_flight_booking(booking_id: int, data: dict):
+    fields = []
+    params = []
+    allowed = ["status", "notes", "departure_city", "destination_city", "trip_type"]
+    for key in allowed:
+        if key in data and data[key] is not None:
+            fields.append(f"{key} = ?")
+            params.append(data[key])
+
+    if not fields:
+        return False
+
+    params.append(booking_id)
+    sql = f"UPDATE flight_bookings SET {', '.join(fields)} WHERE id = ?"
+
+    if USE_TURSO:
+        try:
+            _, affected, _ = query_turso(sql, params)
+            return affected > 0
+        except Exception as e:
+            print(f"[DB] Turso update_flight_booking fallback ({e})")
+
+    conn = get_local_db()
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    conn.commit()
+    updated = cursor.rowcount > 0
+    conn.close()
+    return updated
+
+
+def delete_flight_booking(booking_id: int):
+    if USE_TURSO:
+        try:
+            _, affected, _ = query_turso("DELETE FROM flight_bookings WHERE id = ?", [booking_id])
+            return affected > 0
+        except Exception as e:
+            print(f"[DB] Turso delete_flight_booking fallback ({e})")
+
+    conn = get_local_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM flight_bookings WHERE id = ?", (booking_id,))
+    conn.commit()
+    deleted = cursor.rowcount > 0
+    conn.close()
+    return deleted
+
+
 # ── User Management ───────────────────────────────────
 
 def get_user_by_username(username: str):
@@ -747,19 +965,22 @@ def update_user(user_id: int, data: dict):
 # ── System Backup & Restore ──────────────────────────
 
 def get_system_backup() -> dict:
-    """Generate a comprehensive JSON backup of all users, leads, and platform configuration."""
+    """Generate a comprehensive JSON backup of all users, leads, flights, and platform configuration."""
     users_sql = "SELECT id, username, role, created_at FROM users ORDER BY id ASC"
     leads_sql = "SELECT * FROM leads ORDER BY id ASC"
+    flights_sql = "SELECT * FROM flight_bookings ORDER BY id ASC"
     
     if USE_TURSO:
         try:
-            results = batch_query_turso([users_sql, leads_sql])
+            results = batch_query_turso([users_sql, leads_sql, flights_sql])
             users = results[0]
             leads = results[1]
+            flights = results[2]
         except Exception as e:
             print(f"[DB] Turso backup fallback ({e})")
             users = []
             leads = []
+            flights = []
     else:
         conn = get_local_db()
         cursor = conn.cursor()
@@ -767,6 +988,8 @@ def get_system_backup() -> dict:
         users = [dict(r) for r in cursor.fetchall()]
         cursor.execute(leads_sql)
         leads = [dict(r) for r in cursor.fetchall()]
+        cursor.execute(flights_sql)
+        flights = [dict(r) for r in cursor.fetchall()]
         conn.close()
 
     return {
@@ -776,15 +999,17 @@ def get_system_backup() -> dict:
         "database_backend": "Turso Cloud (AWS Mumbai)" if USE_TURSO else "SQLite3 Local",
         "stats": {
             "total_users": len(users),
-            "total_leads": len(leads)
+            "total_leads": len(leads),
+            "total_flights": len(flights)
         },
         "users": users,
-        "leads": leads
+        "leads": leads,
+        "flight_bookings": flights
     }
 
 
 def restore_system_backup(backup: dict) -> dict:
-    """Restore leads and data from a JSON backup file."""
+    """Restore leads, flight bookings, and data from a JSON backup file."""
     leads_restored = 0
     leads = backup.get("leads", [])
     
@@ -809,10 +1034,30 @@ def restore_system_backup(backup: dict) -> dict:
         }
         create_lead(lead_data)
         leads_restored += 1
+
+    flights_restored = 0
+    flight_bookings = backup.get("flight_bookings", [])
+    for fb in flight_bookings:
+        fb_data = {
+            "full_name": fb.get("full_name", ""),
+            "email": fb.get("email", ""),
+            "phone": fb.get("phone", ""),
+            "trip_type": fb.get("trip_type", "Round Trip"),
+            "departure": fb.get("departure") or fb.get("departure_city", ""),
+            "destination": fb.get("destination") or fb.get("destination_city", ""),
+            "address": fb.get("address", ""),
+            "state": fb.get("state", ""),
+            "zip_code": fb.get("zip_code", ""),
+            "status": fb.get("status", "new"),
+            "notes": fb.get("notes", "")
+        }
+        create_flight_booking(fb_data)
+        flights_restored += 1
         
     return {
         "success": True,
         "leads_restored": leads_restored,
-        "message": f"Successfully restored {leads_restored} lead records to {('Turso Cloud' if USE_TURSO else 'Local Database')}"
+        "flights_restored": flights_restored,
+        "message": f"Successfully restored {leads_restored} lead records and {flights_restored} flight bookings to {('Turso Cloud' if USE_TURSO else 'Local Database')}"
     }
 

@@ -13,6 +13,7 @@ import CategoryView from './components/CategoryView'
 import SubVerticalView from './components/SubVerticalView'
 import ThankYouView from './components/ThankYouView'
 import AdminDashboard from './components/Admin/AdminDashboard'
+import TravelServicesView from './components/Travel/TravelServicesView'
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false)
@@ -137,11 +138,18 @@ export default function App() {
               exit={{ opacity: 0, y: -20, scale: 0.995 }}
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             >
-              <CategoryView
-                verticalId={activeVertical}
-                onNavigateHome={handleNavigateHome}
-                onSelectSubVertical={handleNavigateSubVertical}
-              />
+              {activeVertical === 'travel' ? (
+                <TravelServicesView
+                  onNavigateHome={handleNavigateHome}
+                  onFormSubmitted={handleFormSubmitted}
+                />
+              ) : (
+                <CategoryView
+                  verticalId={activeVertical}
+                  onNavigateHome={handleNavigateHome}
+                  onSelectSubVertical={handleNavigateSubVertical}
+                />
+              )}
             </motion.div>
           )}
 

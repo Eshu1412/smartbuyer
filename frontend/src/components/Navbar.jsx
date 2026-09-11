@@ -34,6 +34,7 @@ export default function Navbar({
     { label: 'Home Services', id: 'home-services', action: () => onNavigateVertical('home-services') },
     { label: 'Finance', id: 'finance', action: () => onNavigateVertical('finance') },
     { label: 'Legal Help', id: 'legal', action: () => onNavigateVertical('legal') },
+    { label: 'Flight Booking', id: 'travel', action: () => onNavigateVertical('travel') },
   ]
 
   const isCategoryActive = (catId) => {

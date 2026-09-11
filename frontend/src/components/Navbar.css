@@ -75,7 +75,7 @@
 .navbar-links {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: clamp(0.75rem, 1.3vw, var(--space-8));
 }
 
 .navbar-link {

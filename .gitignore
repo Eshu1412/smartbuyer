@@ -18,7 +18,12 @@ ENV/
 
 # Database files
 *.db
+*.db-shm
+*.db-wal
 backend/smartbuyer.db
+
+# Submodules or separate clones
+smartbuyer/
 
 # Environment variables & secrets
 .env
