@@ -20,7 +20,8 @@ export default function AdminSettings({ onShowSnackbar }) {
     'Auto & Home Insurance': true,
     'Debt Relief': true,
     'Legal Help': true,
-    'Medicare': true
+    'Medicare': true,
+    'Flight Booking': true
   });
 
   const checkPing = async () => {
@@ -70,12 +71,13 @@ export default function AdminSettings({ onShowSnackbar }) {
       setLastBackupInfo({
         date: new Date().toLocaleTimeString(),
         totalLeads: backupData.stats?.total_leads || 0,
+        totalFlights: backupData.stats?.total_flights || 0,
         totalUsers: backupData.stats?.total_users || 0,
         backend: backupData.database_backend
       });
 
       if (onShowSnackbar) {
-        onShowSnackbar(`Database backup downloaded (${backupData.stats?.total_leads || 0} leads)`, 'success');
+        onShowSnackbar(`Database backup downloaded (${backupData.stats?.total_leads || 0} leads, ${backupData.stats?.total_flights || 0} flights)`, 'success');
       }
     } catch (err) {
       console.error('Backup failed:', err);
@@ -109,7 +111,8 @@ export default function AdminSettings({ onShowSnackbar }) {
       if (!res.ok) throw new Error(data.detail || 'Restore failed');
 
       if (onShowSnackbar) {
-        onShowSnackbar(`Successfully restored ${data.leads_restored} lead records to Turso!`, 'success');
+        const flightText = data.flights_restored ? ` and ${data.flights_restored} flights` : '';
+        onShowSnackbar(`Successfully restored ${data.leads_restored} lead records${flightText} to Turso!`, 'success');
       }
     } catch (err) {
       console.error('Restore error:', err);
@@ -223,7 +226,7 @@ export default function AdminSettings({ onShowSnackbar }) {
                 <div style={{ background: 'var(--md-primary-container)', padding: '0.75rem 1rem', borderRadius: '10px', marginTop: '0.85rem', fontSize: '0.82rem', color: 'var(--md-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <FiClock />
                   <span>
-                    Last backup exported at <strong>{lastBackupInfo.date}</strong> containing <strong>{lastBackupInfo.totalLeads} leads</strong> from {lastBackupInfo.backend}.
+                    Last backup exported at <strong>{lastBackupInfo.date}</strong> containing <strong>{lastBackupInfo.totalLeads} leads</strong> and <strong>{lastBackupInfo.totalFlights} flights</strong> from {lastBackupInfo.backend}.
                   </span>
                 </div>
               )}

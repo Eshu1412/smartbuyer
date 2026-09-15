@@ -160,6 +160,8 @@ class FlightBookingRequest(BaseModel):
     state: Optional[str] = ""
     zip_code: Optional[str] = ""
     notes: Optional[str] = ""
+    trusted_form_cert_url: Optional[str] = None
+    xxTrustedFormCertUrl: Optional[str] = None
 
 
 class FlightBookingUpdateRequest(BaseModel):
@@ -544,6 +546,12 @@ async def submit_flight_booking(req: FlightBookingRequest):
     state = (req.state or "").strip()
     zip_code = (req.zip_code or "").strip()
 
+    # TrustedForm Certificate retention
+    tf_cert_url = (req.trusted_form_cert_url or req.xxTrustedFormCertUrl or "").strip()
+    tf_result = {"retained": False, "cert_id": ""}
+    if tf_cert_url:
+        tf_result = await retain_trusted_form_cert(tf_cert_url)
+
     booking_id = database.create_flight_booking({
         "full_name": req.full_name.strip(),
         "email": req.email.strip(),
@@ -556,6 +564,9 @@ async def submit_flight_booking(req: FlightBookingRequest):
         "address": address,
         "state": state,
         "zip_code": zip_code,
+        "trusted_form_cert_url": tf_cert_url,
+        "trusted_form_retained": tf_result.get("retained", False),
+        "trusted_form_cert_id": tf_result.get("cert_id", ""),
         "status": "new",
         "notes": req.notes or ""
     })
@@ -587,9 +598,9 @@ async def submit_flight_booking(req: FlightBookingRequest):
             "household_size": "1",
             "annual_income_range": "",
             "consent": True,
-            "trusted_form_cert_url": "",
-            "trusted_form_retained": False,
-            "trusted_form_cert_id": "",
+            "trusted_form_cert_url": tf_cert_url,
+            "trusted_form_retained": tf_result.get("retained", False),
+            "trusted_form_cert_id": tf_result.get("cert_id", ""),
             "status": "new",
             "notes": flight_notes,
         })
@@ -602,6 +613,7 @@ async def submit_flight_booking(req: FlightBookingRequest):
         "success": True,
         "booking_id": booking_id,
         "booking": booking,
+        "trusted_form": tf_result,
         "message": f"Thank you, {req.full_name}! Your flight booking request from {departure} to {destination} has been received. Our flight desk will send your fare options shortly."
     }
 

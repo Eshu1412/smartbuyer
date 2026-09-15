@@ -37,6 +37,7 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [confirmedBooking, setConfirmedBooking] = useState(null)
+  const [tcpaConsent, setTcpaConsent] = useState(true)
 
   // Swap departure and destination
   const handleSwap = () => {
@@ -87,8 +88,17 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
       setErrorMsg('Please enter your zip code.')
       return
     }
+    if (!tcpaConsent) {
+      setErrorMsg('Please review and check the TCPA communication consent to proceed.')
+      return
+    }
 
     setSubmitting(true)
+
+    // Capture ActiveProspect TrustedForm certificate URL from generated hidden field
+    const tfCertUrl = document.getElementById('xxTrustedFormCertUrl')?.value || 
+                      document.querySelector('input[name="xxTrustedFormCertUrl"]')?.value || 
+                      ''
 
     const payload = {
       full_name: fullName.trim(),
@@ -100,6 +110,7 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
       address: address.trim(),
       state: stateVal.trim(),
       zip_code: zipCode.trim(),
+      trusted_form_cert_url: tfCertUrl,
       notes: `Trip Type: ${tripType}`
     }
 
@@ -115,6 +126,7 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
         setConfirmedBooking({
           id: data.booking_id || Math.floor(100000 + Math.random() * 900000),
           ...payload,
+          trusted_form: data.trusted_form,
           message: data.message
         })
         if (onFormSubmitted) {
@@ -146,6 +158,7 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
       setConfirmedBooking({
         id: fallbackId,
         ...payload,
+        trusted_form: { retained: false, cert_id: '' },
         message: `Thank you, ${fullName}! Your flight booking request from ${departure} to ${destination} has been logged.`
       })
     } finally {
@@ -163,6 +176,7 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
     setAddress('')
     setStateVal('')
     setZipCode('')
+    setTcpaConsent(true)
   }
 
   return (
@@ -212,6 +226,9 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
 
         {/* Flight Booking Form */}
         <form onSubmit={handleSubmit} className="flight-form-grid">
+          {/* ActiveProspect TrustedForm Certificate Hidden Input Field */}
+          <input type="hidden" id="xxTrustedFormCertUrl" name="xxTrustedFormCertUrl" />
+
           {/* Section 1: Route Details (Departure & Destination text fields) */}
           <div className="flight-form-section">
             <h3 className="flight-section-heading">
@@ -405,6 +422,28 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
             </div>
           </div>
 
+          {/* TCPA Compliance Section with TrustedForm Certification Notice */}
+          <div className="flight-tcpa-box">
+            <label className="flight-tcpa-label" htmlFor="flight-tcpa-consent">
+              <input
+                type="checkbox"
+                id="flight-tcpa-consent"
+                className="flight-tcpa-checkbox"
+                checked={tcpaConsent}
+                onChange={(e) => setTcpaConsent(e.target.checked)}
+                required
+              />
+              <span className="flight-tcpa-text">
+                By checking this box and clicking &quot;Get Free Flight Quotes&quot;, I provide my express written consent authorizing SmartQuoteHub and its flight &amp; travel partners to contact me at the phone number and email address provided above (including via automated telephone dialing systems, SMS text messages, and artificial/prerecorded voice calls) regarding flight quotes and travel deals. Consent is not required as a condition of purchase. Msg &amp; data rates may apply.
+              </span>
+            </label>
+            <div className="flight-tcpa-badge-row">
+              <span className="flight-tf-indicator" title="ActiveProspect TrustedForm TCPA Certification Active">
+                <FaShieldAlt style={{ color: '#10b981' }} /> ActiveProspect TrustedForm&reg; Certified
+              </span>
+            </div>
+          </div>
+
           {/* Submit Action */}
           <button
             type="submit"
@@ -503,6 +542,18 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
                     <div className="ticket-field-label">State / Zip</div>
                     <div className="ticket-field-val">{confirmedBooking.state} - {confirmedBooking.zip_code}</div>
                   </div>
+                  {confirmedBooking.trusted_form_cert_url && (
+                    <div className="ticket-field ticket-field-full">
+                      <div className="ticket-field-label">TCPA Compliance Verification</div>
+                      <div className="ticket-field-val ticket-tf-certified">
+                        <FaShieldAlt style={{ color: '#10b981', marginRight: '6px' }} />
+                        TrustedForm Certificate Recorded
+                        {confirmedBooking.trusted_form?.cert_id && (
+                          <span className="ticket-cert-id"> (ID: {confirmedBooking.trusted_form.cert_id})</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="ticket-footer">

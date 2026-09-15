@@ -25,6 +25,7 @@ except ImportError:
 # ── Turso Configuration ────────────────────────────────
 TURSO_DB_URL = os.getenv("TURSO_DATABASE_URL", "")
 TURSO_AUTH_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
+DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "GNPrimelink@1322")
 
 # Normalize Turso URL for HTTP Pipeline API
 if TURSO_DB_URL.startswith("libsql://"):
@@ -205,6 +206,9 @@ def init_db():
             address TEXT DEFAULT '',
             state TEXT DEFAULT '',
             zip_code TEXT DEFAULT '',
+            trusted_form_cert_url TEXT DEFAULT '',
+            trusted_form_retained INTEGER NOT NULL DEFAULT 0,
+            trusted_form_cert_id TEXT DEFAULT '',
             status TEXT NOT NULL DEFAULT 'new' CHECK(status IN ('new', 'contacted', 'booked', 'cancelled')),
             notes TEXT DEFAULT '',
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -217,9 +221,10 @@ def init_db():
             print(f"[DB] Turso Database connected & initialized: {TURSO_DB_URL}")
             
             # Ensure columns exist on Turso if table already existed
-            for col in ["departure", "destination", "address", "state", "zip_code"]:
+            for col in ["departure", "destination", "address", "state", "zip_code", "trusted_form_cert_url", "trusted_form_retained", "trusted_form_cert_id"]:
                 try:
-                    query_turso(f"ALTER TABLE flight_bookings ADD COLUMN {col} TEXT DEFAULT ''")
+                    col_type = "INTEGER DEFAULT 0" if col == "trusted_form_retained" else "TEXT DEFAULT ''"
+                    query_turso(f"ALTER TABLE flight_bookings ADD COLUMN {col} {col_type}")
                 except Exception:
                     pass
 
@@ -229,9 +234,9 @@ def init_db():
                 from auth import hash_password
                 query_turso(
                     "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-                    ["admin", hash_password("admin123"), "admin"]
+                    ["admin", hash_password(DEFAULT_ADMIN_PASSWORD), "admin"]
                 )
-                print("[DB] Default admin created on Turso (admin / admin123)")
+                print(f"[DB] Default admin created on Turso (admin / {DEFAULT_ADMIN_PASSWORD})")
 
             # Check if leads table is empty and seed initial realistic leads
             l_rows, _, _ = query_turso("SELECT COUNT(*) as count FROM leads")
@@ -248,9 +253,10 @@ def init_db():
     cursor.execute(create_leads_sql)
     cursor.execute(create_flight_bookings_sql)
     # Ensure columns exist on local SQLite if table was created previously
-    for col in ["departure", "destination", "address", "state", "zip_code"]:
+    for col in ["departure", "destination", "address", "state", "zip_code", "trusted_form_cert_url", "trusted_form_retained", "trusted_form_cert_id"]:
         try:
-            cursor.execute(f"ALTER TABLE flight_bookings ADD COLUMN {col} TEXT DEFAULT ''")
+            col_type = "INTEGER DEFAULT 0" if col == "trusted_form_retained" else "TEXT DEFAULT ''"
+            cursor.execute(f"ALTER TABLE flight_bookings ADD COLUMN {col} {col_type}")
         except Exception:
             pass
     cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
@@ -258,9 +264,9 @@ def init_db():
         from auth import hash_password
         cursor.execute(
             "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-            ("admin", hash_password("admin123"), "admin"),
+            ("admin", hash_password(DEFAULT_ADMIN_PASSWORD), "admin"),
         )
-        print("[DB] Default admin created locally (admin / admin123)")
+        print(f"[DB] Default admin created locally (admin / {DEFAULT_ADMIN_PASSWORD})")
     conn.commit()
     conn.close()
     print(f"[DB] Local SQLite database initialized at {LOCAL_DB_PATH}")
@@ -631,8 +637,9 @@ def create_flight_booking(data: dict) -> int:
             full_name, email, phone, trip_type,
             departure, destination, departure_city, destination_city,
             address, state, zip_code,
+            trusted_form_cert_url, trusted_form_retained, trusted_form_cert_id,
             status, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     params = [
         data["full_name"],
@@ -646,6 +653,9 @@ def create_flight_booking(data: dict) -> int:
         data.get("address", ""),
         data.get("state", ""),
         data.get("zip_code", ""),
+        data.get("trusted_form_cert_url", ""),
+        1 if data.get("trusted_form_retained") else 0,
+        data.get("trusted_form_cert_id", ""),
         data.get("status", "new"),
         data.get("notes", "")
     ]
@@ -809,16 +819,17 @@ def delete_flight_booking(booking_id: int):
 # ── User Management ───────────────────────────────────
 
 def get_user_by_username(username: str):
+    clean_username = (username or "").strip()
     if USE_TURSO:
         try:
-            rows, _, _ = query_turso("SELECT * FROM users WHERE username = ?", [username])
+            rows, _, _ = query_turso("SELECT * FROM users WHERE LOWER(username) = LOWER(?)", [clean_username])
             return rows[0] if rows else None
         except Exception as e:
             print(f"[DB] Turso get_user_by_username fallback ({e})")
 
     conn = get_local_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    cursor.execute("SELECT * FROM users WHERE LOWER(username) = LOWER(?)", (clean_username,))
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
@@ -1048,6 +1059,9 @@ def restore_system_backup(backup: dict) -> dict:
             "address": fb.get("address", ""),
             "state": fb.get("state", ""),
             "zip_code": fb.get("zip_code", ""),
+            "trusted_form_cert_url": fb.get("trusted_form_cert_url", ""),
+            "trusted_form_retained": bool(fb.get("trusted_form_retained", 0)),
+            "trusted_form_cert_id": fb.get("trusted_form_cert_id", ""),
             "status": fb.get("status", "new"),
             "notes": fb.get("notes", "")
         }
