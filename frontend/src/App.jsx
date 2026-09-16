@@ -195,6 +195,7 @@ export default function App() {
         isOpen={quoteOpen}
         onClose={() => setQuoteOpen(false)}
         defaultService={selectedService}
+        onNavigateVertical={handleNavigateVertical}
       />
     </>
   )
