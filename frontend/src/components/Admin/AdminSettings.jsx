@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { 
   FiServer, FiCpu, FiHardDrive, FiCheckCircle, 
   FiRefreshCw, FiDownload, FiUpload, FiShield, 
-  FiSliders, FiActivity, FiDatabase, FiFileText, FiClock
+  FiSliders, FiActivity, FiDatabase, FiFileText, FiClock,
+  FiPhoneCall, FiMessageSquare, FiEye, FiSave, FiCheck, FiSettings
 } from 'react-icons/fi';
+import ContactRedirectModal from '../ContactRedirectModal';
 
 export default function AdminSettings({ onShowSnackbar }) {
   const [health, setHealth] = useState({ status: 'healthy', latency: 42 });
@@ -24,6 +26,32 @@ export default function AdminSettings({ onShowSnackbar }) {
     'Flight Booking': true
   });
 
+  // Contact Us & Redirection Config State
+  const [contactConfig, setContactConfig] = useState(() => {
+    try {
+      const cached = localStorage.getItem('contact_config');
+      return cached ? JSON.parse(cached) : {
+        enabled: true,
+        phone_number: '+18558312264',
+        modal_title: 'Speak With an Advisor Right Now',
+        modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.',
+        auto_redirect: true,
+        auto_redirect_seconds: 5
+      };
+    } catch {
+      return {
+        enabled: true,
+        phone_number: '+18558312264',
+        modal_title: 'Speak With an Advisor Right Now',
+        modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.',
+        auto_redirect: true,
+        auto_redirect_seconds: 5
+      };
+    }
+  });
+  const [savingContact, setSavingContact] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const checkPing = async () => {
     setPinging(true);
     const start = performance.now();
@@ -42,7 +70,50 @@ export default function AdminSettings({ onShowSnackbar }) {
 
   useEffect(() => {
     checkPing();
+    const fetchContactSettings = async () => {
+      try {
+        const res = await fetch('/api/settings/contact');
+        if (res.ok) {
+          const data = await res.json();
+          setContactConfig(data);
+          localStorage.setItem('contact_config', JSON.stringify(data));
+        }
+      } catch (err) {
+        console.warn('Could not fetch remote contact config, using local cache', err);
+      }
+    };
+    fetchContactSettings();
   }, []);
+
+  const handleSaveContactConfig = async (e) => {
+    if (e) e.preventDefault();
+    setSavingContact(true);
+    try {
+      const res = await fetch('/api/admin/settings/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactConfig)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setContactConfig(data.config || contactConfig);
+        localStorage.setItem('contact_config', JSON.stringify(data.config || contactConfig));
+        if (onShowSnackbar) {
+          onShowSnackbar('Contact Us configuration & form redirect number saved!', 'success');
+        }
+      } else {
+        throw new Error(data.detail || 'Failed to save settings');
+      }
+    } catch (err) {
+      console.error('Save contact config error:', err);
+      localStorage.setItem('contact_config', JSON.stringify(contactConfig));
+      if (onShowSnackbar) {
+        onShowSnackbar('Saved contact configuration locally', 'info');
+      }
+    } finally {
+      setSavingContact(false);
+    }
+  };
 
   const toggleVertical = (v) => {
     setActiveVerticals(prev => {
@@ -276,7 +347,161 @@ export default function AdminSettings({ onShowSnackbar }) {
             ))}
           </div>
         </div>
+
+        {/* Full-Width Section: Contact Us Config Number & On-Screen Form Redirection */}
+        <div className="admin-panel" style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
+          <div className="admin-panel-header" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h3 className="admin-panel-title">
+                <FiPhoneCall style={{ color: 'var(--md-primary)' }} />
+                Contact Us Config Number & Lead Redirection
+              </h3>
+              <span style={{ fontSize: '0.85rem', color: 'var(--md-on-surface-variant)' }}>
+                Configure the direct hotline number and automatic on-screen message window displayed after any customer submits a form
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <button 
+                type="button" 
+                className="admin-btn-secondary" 
+                onClick={() => setPreviewOpen(true)}
+                title="Preview the on-screen customer message window"
+              >
+                <FiEye /> Preview Message Window
+              </button>
+              <button 
+                type="button" 
+                className="admin-btn-primary" 
+                onClick={handleSaveContactConfig}
+                disabled={savingContact}
+              >
+                <FiSave /> {savingContact ? 'Saving...' : 'Save Configuration'}
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveContactConfig} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+              {/* Phone Number Field */}
+              <div className="admin-form-group">
+                <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
+                  Primary Contact Hotline Phone Number *
+                </label>
+                <div className="admin-input-wrapper">
+                  <FiPhoneCall className="admin-input-icon" style={{ color: 'var(--md-primary)' }} />
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="e.g. +18558312264"
+                    value={contactConfig.phone_number || ''}
+                    onChange={(e) => setContactConfig({ ...contactConfig, phone_number: e.target.value })}
+                    required
+                  />
+                </div>
+                <span style={{ fontSize: '0.78rem', color: 'var(--md-on-surface-variant)' }}>
+                  Customers can click to instantly call this number after submitting any quote or flight request.
+                </span>
+              </div>
+
+              {/* Window Title */}
+              <div className="admin-form-group">
+                <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
+                  On-Screen Message Window Title
+                </label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--md-outline-variant)', background: 'var(--md-surface)', color: 'var(--md-on-surface)' }}
+                  placeholder="e.g. Speak With an Advisor Right Now"
+                  value={contactConfig.modal_title || ''}
+                  onChange={(e) => setContactConfig({ ...contactConfig, modal_title: e.target.value })}
+                />
+                <span style={{ fontSize: '0.78rem', color: 'var(--md-on-surface-variant)' }}>
+                  Headline displayed prominently inside the customer message popup window.
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>
+              {/* Auto Redirect Countdown */}
+              <div className="admin-form-group">
+                <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
+                  Auto-Redirect Timer (Seconds)
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <input
+                    type="number"
+                    min="2"
+                    max="30"
+                    className="admin-input"
+                    style={{ width: '100px', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--md-outline-variant)', background: 'var(--md-surface)', color: 'var(--md-on-surface)' }}
+                    value={contactConfig.auto_redirect_seconds || 5}
+                    onChange={(e) => setContactConfig({ ...contactConfig, auto_redirect_seconds: Number(e.target.value) })}
+                    disabled={!contactConfig.auto_redirect}
+                  />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--md-on-surface)' }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(contactConfig.auto_redirect)}
+                      onChange={(e) => setContactConfig({ ...contactConfig, auto_redirect: e.target.checked })}
+                    />
+                    Enable Auto-Redirect Countdown Bar to Call Hotline
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Custom Subtitle / Message */}
+            <div className="admin-form-group">
+              <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
+                Customer Notice Message
+              </label>
+              <textarea
+                rows="2"
+                className="admin-input"
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--md-outline-variant)', background: 'var(--md-surface)', color: 'var(--md-on-surface)', resize: 'vertical' }}
+                placeholder="Enter reassurance text displayed in the message window..."
+                value={contactConfig.modal_message || ''}
+                onChange={(e) => setContactConfig({ ...contactConfig, modal_message: e.target.value })}
+              />
+            </div>
+
+            {/* Status Activation Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--md-surface-container-low)', borderRadius: '12px', border: '1px solid var(--md-outline-variant)' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--md-on-surface)' }}>
+                  Message Window Activation Status
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--md-on-surface-variant)' }}>
+                  When enabled, any customer submitting a quote or flight request will see this message window immediately on screen.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className={`status-pill ${contactConfig.enabled ? 'qualified' : 'closed'}`}
+                style={{ cursor: 'pointer', padding: '0.4rem 1rem', fontSize: '0.85rem' }}
+                onClick={() => setContactConfig({ ...contactConfig, enabled: !contactConfig.enabled })}
+              >
+                {contactConfig.enabled ? 'ACTIVE (DISPLAYING)' : 'DISABLED (OFF)'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
+
+      {/* Live Preview Modal */}
+      <ContactRedirectModal
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        config={contactConfig}
+        leadData={{
+          service: 'Health Insurance',
+          name: 'Preview Customer',
+          phone: contactConfig.phone_number
+        }}
+      />
     </motion.div>
   );
 }

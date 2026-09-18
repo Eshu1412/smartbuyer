@@ -178,7 +178,8 @@ export default function QuoteForm({
   isOpen, 
   onClose, 
   defaultService = '', 
-  onNavigateVertical 
+  onNavigateVertical,
+  onFormSubmitted
 }) {
   const [step, setStep] = useState(1) // 1 = Service & Needs, 2 = Contact & TCPA, 3 = Confirmation
   const [selectedServiceId, setSelectedServiceId] = useState('health')
@@ -293,8 +294,7 @@ export default function QuoteForm({
         body: JSON.stringify(payload),
       })
 
-      const data = await res.json()
-      setLeadResult({
+      const resultObj = {
         refId: data.lead_id ? `REQ-${data.lead_id}` : `REQ-${Math.floor(100000 + Math.random() * 900000)}`,
         serviceTitle: activeService.title,
         category: activeService.category,
@@ -305,11 +305,23 @@ export default function QuoteForm({
         trustedFormRetained: data.trusted_form?.retained || !!tfCertUrl,
         certId: data.trusted_form?.cert_id || '',
         message: data.message || `Thank you, ${formData.full_name}! Your quote request for ${activeService.title} has been received.`
-      })
+      }
+      setLeadResult(resultObj)
       setStep(3)
+      if (onFormSubmitted) {
+        onFormSubmitted({
+          name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone,
+          zip_code: formData.zip_code,
+          service: activeService.title,
+          category: activeService.category,
+          answers: { ...answers, preferred_contact_time: formData.preferred_time }
+        })
+      }
     } catch {
       // Fallback offline preview
-      setLeadResult({
+      const fallbackObj = {
         refId: `REQ-${Math.floor(100000 + Math.random() * 900000)}`,
         serviceTitle: activeService.title,
         category: activeService.category,
@@ -320,8 +332,20 @@ export default function QuoteForm({
         trustedFormRetained: false,
         certId: '',
         message: `Thank you, ${formData.full_name}! Your quote request has been securely recorded.`
-      })
+      }
+      setLeadResult(fallbackObj)
       setStep(3)
+      if (onFormSubmitted) {
+        onFormSubmitted({
+          name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone,
+          zip_code: formData.zip_code,
+          service: activeService.title,
+          category: activeService.category,
+          answers: { ...answers, preferred_contact_time: formData.preferred_time }
+        })
+      }
     } finally {
       setSubmitting(false)
     }

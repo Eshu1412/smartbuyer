@@ -149,9 +149,9 @@ class CreateUserRequest(BaseModel):
 
 class FlightBookingRequest(BaseModel):
     full_name: str
-    email: str
     phone: str
-    trip_type: str  # 'One Way' or 'Round Trip'
+    email: Optional[str] = ""
+    trip_type: Optional[str] = "Round Trip"  # 'One Way' or 'Round Trip'
     departure: Optional[str] = ""
     destination: Optional[str] = ""
     departure_city: Optional[str] = ""
@@ -162,6 +162,16 @@ class FlightBookingRequest(BaseModel):
     notes: Optional[str] = ""
     trusted_form_cert_url: Optional[str] = None
     xxTrustedFormCertUrl: Optional[str] = None
+
+
+class ContactConfigRequest(BaseModel):
+    enabled: Optional[bool] = True
+    phone_number: Optional[str] = "+18558312264"
+    modal_title: Optional[str] = "Speak With an Advisor Right Now"
+    modal_message: Optional[str] = "Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates."
+    auto_redirect: Optional[bool] = True
+    auto_redirect_seconds: Optional[int] = 5
+
 
 
 class FlightBookingUpdateRequest(BaseModel):
@@ -530,17 +540,12 @@ async def submit_flight_booking(req: FlightBookingRequest):
     # Validate required fields
     if not req.full_name.strip():
         raise HTTPException(status_code=400, detail="Full Name is required")
-    if not req.email.strip():
-        raise HTTPException(status_code=400, detail="Email Address is required")
     if not req.phone.strip():
         raise HTTPException(status_code=400, detail="Phone Number is required")
     
     departure = (req.departure or req.departure_city or "").strip()
     destination = (req.destination or req.destination_city or "").strip()
-    if not departure:
-        raise HTTPException(status_code=400, detail="Departure is required")
-    if not destination:
-        raise HTTPException(status_code=400, detail="Destination is required")
+    email_val = (req.email or "").strip()
 
     address = (req.address or "").strip()
     state = (req.state or "").strip()
@@ -554,7 +559,7 @@ async def submit_flight_booking(req: FlightBookingRequest):
 
     booking_id = database.create_flight_booking({
         "full_name": req.full_name.strip(),
-        "email": req.email.strip(),
+        "email": email_val,
         "phone": req.phone.strip(),
         "trip_type": req.trip_type or "Round Trip",
         "departure": departure,
@@ -575,7 +580,8 @@ async def submit_flight_booking(req: FlightBookingRequest):
     name_parts = req.full_name.strip().split(" ", 1)
     first_name = name_parts[0]
     last_name = name_parts[1] if len(name_parts) > 1 else ""
-    flight_notes = f"Trip Type: {req.trip_type} | Route: {departure} -> {destination}"
+    route_desc = f"{departure} -> {destination}" if (departure or destination) else "Direct Flight Assistance"
+    flight_notes = f"Trip Type: {req.trip_type} | Service: {route_desc}"
     if address:
         flight_notes += f" | Address: {address}"
     if state:
@@ -589,9 +595,9 @@ async def submit_flight_booking(req: FlightBookingRequest):
         database.create_lead({
             "first_name": first_name,
             "last_name": last_name,
-            "email": req.email.strip(),
+            "email": email_val or "no-email@smartquotehub.com",
             "phone": req.phone.strip(),
-            "zip_code": zip_code or departure[:10],
+            "zip_code": zip_code or "00000",
             "date_of_birth": "",
             "service_type": "Flight Booking",
             "current_provider": "Flight Desk",
@@ -614,7 +620,7 @@ async def submit_flight_booking(req: FlightBookingRequest):
         "booking_id": booking_id,
         "booking": booking,
         "trusted_form": tf_result,
-        "message": f"Thank you, {req.full_name}! Your flight booking request from {departure} to {destination} has been received. Our flight desk will send your fare options shortly."
+        "message": f"Thank you, {req.full_name}! Your flight booking request has been received. Our flight desk will send your fare options shortly."
     }
 
 
@@ -726,9 +732,26 @@ async def import_backup(backup_data: dict):
     return result
 
 
+# ── Contact Us & Form Redirect Configuration API ────────
+
+@app.get("/api/settings/contact")
+async def get_contact_settings():
+    """Public endpoint to fetch active contact & redirect settings for consumer form modals."""
+    return database.get_contact_config()
+
+
+@app.post("/api/admin/settings/contact")
+async def update_contact_settings(req: ContactConfigRequest):
+    """Admin endpoint to update contact phone number and on-screen redirection settings."""
+    data = req.dict(exclude_unset=True)
+    updated = database.update_contact_config(data)
+    return {"success": True, "config": updated, "message": "Contact redirection settings saved successfully"}
+
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy"}
+
 
 
 # Serve static frontend production build if present

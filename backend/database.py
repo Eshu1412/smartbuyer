@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import sqlite3
 import httpx
+import json
 from datetime import datetime
 
 # Automatically load environment variables from .env file
@@ -214,10 +215,17 @@ def init_db():
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
     """
+    create_settings_sql = """
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+    """
 
     if USE_TURSO:
         try:
-            batch_query_turso([create_users_sql, create_leads_sql, create_flight_bookings_sql])
+            batch_query_turso([create_users_sql, create_leads_sql, create_flight_bookings_sql, create_settings_sql])
             print(f"[DB] Turso Database connected & initialized: {TURSO_DB_URL}")
             
             # Ensure columns exist on Turso if table already existed
@@ -228,15 +236,25 @@ def init_db():
                 except Exception:
                     pass
 
-            # Check for default admin
-            rows, _, _ = query_turso("SELECT COUNT(*) as count FROM users WHERE role = 'admin'")
-            if not rows or rows[0].get("count", 0) == 0:
-                from auth import hash_password
-                query_turso(
-                    "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-                    ["admin", hash_password(DEFAULT_ADMIN_PASSWORD), "admin"]
-                )
-                print(f"[DB] Default admin created on Turso (admin / {DEFAULT_ADMIN_PASSWORD})")
+            # Ensure primary admin accounts (GNPrimeLink and admin) exist
+            from auth import hash_password
+            admin_pw_hash = hash_password(DEFAULT_ADMIN_PASSWORD)
+            for uname in ["GNPrimeLink", "admin"]:
+                try:
+                    u_rows, _, _ = query_turso("SELECT * FROM users WHERE LOWER(username) = LOWER(?)", [uname])
+                    if not u_rows:
+                        query_turso(
+                            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                            [uname, admin_pw_hash, "admin"]
+                        )
+                        print(f"[DB] Admin user '{uname}' created on Turso")
+                    else:
+                        query_turso(
+                            "UPDATE users SET password_hash = ?, role = 'admin' WHERE LOWER(username) = LOWER(?)",
+                            [admin_pw_hash, uname]
+                        )
+                except Exception as ex:
+                    print(f"[DB] Turso admin user '{uname}' check warning: {ex}")
 
             # Check if leads table is empty and seed initial realistic leads
             l_rows, _, _ = query_turso("SELECT COUNT(*) as count FROM leads")
@@ -252,6 +270,7 @@ def init_db():
     cursor.execute(create_users_sql)
     cursor.execute(create_leads_sql)
     cursor.execute(create_flight_bookings_sql)
+    cursor.execute(create_settings_sql)
     # Ensure columns exist on local SQLite if table was created previously
     for col in ["departure", "destination", "address", "state", "zip_code", "trusted_form_cert_url", "trusted_form_retained", "trusted_form_cert_id"]:
         try:
@@ -259,14 +278,22 @@ def init_db():
             cursor.execute(f"ALTER TABLE flight_bookings ADD COLUMN {col} {col_type}")
         except Exception:
             pass
-    cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
-    if cursor.fetchone()[0] == 0:
-        from auth import hash_password
-        cursor.execute(
-            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-            ("admin", hash_password(DEFAULT_ADMIN_PASSWORD), "admin"),
-        )
-        print(f"[DB] Default admin created locally (admin / {DEFAULT_ADMIN_PASSWORD})")
+
+    from auth import hash_password
+    admin_pw_hash = hash_password(DEFAULT_ADMIN_PASSWORD)
+    for uname in ["GNPrimeLink", "admin"]:
+        cursor.execute("SELECT COUNT(*) FROM users WHERE LOWER(username) = LOWER(?)", (uname,))
+        if cursor.fetchone()[0] == 0:
+            cursor.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                (uname, admin_pw_hash, "admin"),
+            )
+            print(f"[DB] Admin user '{uname}' created locally")
+        else:
+            cursor.execute(
+                "UPDATE users SET password_hash = ?, role = 'admin' WHERE LOWER(username) = LOWER(?)",
+                (admin_pw_hash, uname),
+            )
     conn.commit()
     conn.close()
     print(f"[DB] Local SQLite database initialized at {LOCAL_DB_PATH}")
@@ -1074,4 +1101,112 @@ def restore_system_backup(backup: dict) -> dict:
         "flights_restored": flights_restored,
         "message": f"Successfully restored {leads_restored} lead records and {flights_restored} flight bookings to {('Turso Cloud' if USE_TURSO else 'Local Database')}"
     }
+
+
+# ── App Settings & Contact Configuration ─────────────────
+
+DEFAULT_CONTACT_CONFIG = {
+    "enabled": True,
+    "phone_number": "+18558312264",
+    "modal_title": "Speak With an Advisor Right Now",
+    "modal_message": "Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.",
+    "auto_redirect": True,
+    "auto_redirect_seconds": 5
+}
+
+_settings_table_ensured = False
+
+def _ensure_settings_table():
+    global _settings_table_ensured
+    if _settings_table_ensured:
+        return
+    create_sql = "CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT (datetime('now')))"
+    if USE_TURSO:
+        try:
+            query_turso(create_sql)
+        except Exception as e:
+            print(f"[DB] Turso ensure app_settings error ({e})")
+    try:
+        conn = get_local_db()
+        c = conn.cursor()
+        c.execute(create_sql)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[DB] Local SQLite ensure app_settings error ({e})")
+    _settings_table_ensured = True
+
+
+def get_app_setting(key: str, default=None):
+    """Retrieve an application setting by key from Turso or local SQLite."""
+    _ensure_settings_table()
+    if USE_TURSO:
+        try:
+            rows, _, _ = query_turso("SELECT value FROM app_settings WHERE key = ?", [key])
+            if rows and len(rows) > 0:
+                return rows[0].get("value", default)
+            return default
+        except Exception as e:
+            print(f"[DB] Turso get_app_setting fallback ({e})")
+    
+    try:
+        conn = get_local_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM app_settings WHERE key = ?", (key,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return row[0]
+    except Exception as e:
+        print(f"[DB] Local get_app_setting error ({e})")
+    return default
+
+def set_app_setting(key: str, value: str):
+    """Persist an application setting key-value pair."""
+    _ensure_settings_table()
+    now_iso = datetime.utcnow().isoformat()
+    if USE_TURSO:
+        try:
+            query_turso(
+                "INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+                [key, value, now_iso]
+            )
+            return True
+        except Exception as e:
+            print(f"[DB] Turso set_app_setting fallback ({e})")
+
+    try:
+        conn = get_local_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+            (key, value, now_iso)
+        )
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"[DB] Local set_app_setting error ({e})")
+        return False
+
+def get_contact_config() -> dict:
+    raw = get_app_setting("contact_config", None)
+    if not raw:
+        return dict(DEFAULT_CONTACT_CONFIG)
+    try:
+        data = json.loads(raw)
+        merged = dict(DEFAULT_CONTACT_CONFIG)
+        merged.update(data)
+        return merged
+    except Exception:
+        return dict(DEFAULT_CONTACT_CONFIG)
+
+def update_contact_config(new_config: dict) -> dict:
+    current = get_contact_config()
+    current.update(new_config)
+    set_app_setting("contact_config", json.dumps(current))
+    return current
+
 

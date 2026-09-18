@@ -14,6 +14,7 @@ import SubVerticalView from './components/SubVerticalView'
 import ThankYouView from './components/ThankYouView'
 import AdminDashboard from './components/Admin/AdminDashboard'
 import TravelServicesView from './components/Travel/TravelServicesView'
+import ContactRedirectModal from './components/ContactRedirectModal'
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false)
@@ -26,6 +27,31 @@ export default function App() {
   const [activeSub, setActiveSub] = useState('')
   const [submittedLead, setSubmittedLead] = useState(null)
 
+  // On-screen Contact & Redirect Window state
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [contactConfig, setContactConfig] = useState(() => {
+    try {
+      const cached = localStorage.getItem('contact_config')
+      return cached ? JSON.parse(cached) : {
+        enabled: true,
+        phone_number: '+18558312264',
+        modal_title: 'Speak With an Advisor Right Now',
+        modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.',
+        auto_redirect: true,
+        auto_redirect_seconds: 5
+      }
+    } catch {
+      return {
+        enabled: true,
+        phone_number: '+18558312264',
+        modal_title: 'Speak With an Advisor Right Now',
+        modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.',
+        auto_redirect: true,
+        auto_redirect_seconds: 5
+      }
+    }
+  })
+
   // Listen to #admin hash or location changes
   useEffect(() => {
     const checkHash = () => {
@@ -36,6 +62,23 @@ export default function App() {
     checkHash()
     window.addEventListener('hashchange', checkHash)
     return () => window.removeEventListener('hashchange', checkHash)
+  }, [])
+
+  // Fetch admin contact configuration on mount
+  useEffect(() => {
+    const fetchContactSettings = async () => {
+      try {
+        const res = await fetch('/api/settings/contact')
+        if (res.ok) {
+          const data = await res.json()
+          setContactConfig(data)
+          localStorage.setItem('contact_config', JSON.stringify(data))
+        }
+      } catch (err) {
+        console.warn('Using cached contact settings', err)
+      }
+    }
+    fetchContactSettings()
   }, [])
 
   const handleSplashComplete = useCallback(() => {
@@ -74,6 +117,10 @@ export default function App() {
   const handleFormSubmitted = (leadInfo) => {
     setSubmittedLead(leadInfo)
     setViewState('thank-you')
+    if (quoteOpen) setQuoteOpen(false)
+    if (contactConfig?.enabled !== false) {
+      setShowContactModal(true)
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -196,6 +243,15 @@ export default function App() {
         onClose={() => setQuoteOpen(false)}
         defaultService={selectedService}
         onNavigateVertical={handleNavigateVertical}
+        onFormSubmitted={handleFormSubmitted}
+      />
+
+      {/* On-screen Contact Us & Redirection Message Window */}
+      <ContactRedirectModal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+        config={contactConfig}
+        leadData={submittedLead}
       />
     </>
   )

@@ -284,15 +284,25 @@
   color: #94a3b8;
 }
 
-/* Contact Row: Full Name, Email Address, Phone Number */
+/* Contact Rows: Clean 2-column and 3-column responsive grids */
 .contact-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
+.contact-row-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.contact-row-3 {
+  grid-template-columns: 2fr 1fr 1fr;
+}
+
 @media (max-width: 800px) {
-  .contact-row {
+  .contact-row,
+  .contact-row-2,
+  .contact-row-3 {
     grid-template-columns: 1fr;
   }
 }

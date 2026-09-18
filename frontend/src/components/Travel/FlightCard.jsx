@@ -2,11 +2,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   FaPlane, 
-  FaPlaneDeparture, 
-  FaPlaneArrival, 
-  FaExchangeAlt, 
   FaUser, 
-  FaEnvelope, 
   FaPhone, 
   FaMapMarkerAlt,
   FaCity,
@@ -19,15 +15,12 @@ import {
 } from 'react-icons/fa'
 import './FlightCard.css'
 
-export default function FlightCard({ prefillDeparture = '', prefillDestination = '', onFormSubmitted }) {
+export default function FlightCard({ onFormSubmitted }) {
   // Form State
   const [tripType, setTripType] = useState('Round Trip') // 'One Way' | 'Round Trip'
-  const [departure, setDeparture] = useState(prefillDeparture)
-  const [destination, setDestination] = useState(prefillDestination)
   
   // Passenger Contact Details
   const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
   const [stateVal, setStateVal] = useState('')
@@ -39,37 +32,14 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
   const [confirmedBooking, setConfirmedBooking] = useState(null)
   const [tcpaConsent, setTcpaConsent] = useState(true)
 
-  // Swap departure and destination
-  const handleSwap = () => {
-    const temp = departure
-    setDeparture(destination)
-    setDestination(temp)
-  }
-
   // Handle Form Submit
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorMsg('')
 
     // Client-side validations
-    if (!departure.trim()) {
-      setErrorMsg('Please enter a departure location.')
-      return
-    }
-    if (!destination.trim()) {
-      setErrorMsg('Please enter a destination location.')
-      return
-    }
-    if (departure.trim().toLowerCase() === destination.trim().toLowerCase()) {
-      setErrorMsg('Departure and destination cannot be identical.')
-      return
-    }
     if (!fullName.trim()) {
       setErrorMsg('Please enter your full name.')
-      return
-    }
-    if (!email.trim() || !email.includes('@')) {
-      setErrorMsg('Please enter a valid email address.')
       return
     }
     if (!phone.trim() || phone.trim().length < 7) {
@@ -102,11 +72,11 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
 
     const payload = {
       full_name: fullName.trim(),
-      email: email.trim(),
+      email: '',
       phone: phone.trim(),
       trip_type: tripType,
-      departure: departure.trim(),
-      destination: destination.trim(),
+      departure: '',
+      destination: '',
       address: address.trim(),
       state: stateVal.trim(),
       zip_code: zipCode.trim(),
@@ -132,7 +102,6 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
         if (onFormSubmitted) {
           onFormSubmitted({
             name: fullName.trim(),
-            email: email.trim(),
             phone: phone.trim(),
             service: 'Flight Booking',
             details: payload
@@ -159,8 +128,16 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
         id: fallbackId,
         ...payload,
         trusted_form: { retained: false, cert_id: '' },
-        message: `Thank you, ${fullName}! Your flight booking request from ${departure} to ${destination} has been logged.`
+        message: `Thank you, ${fullName}! Your flight booking request has been logged.`
       })
+      if (onFormSubmitted) {
+        onFormSubmitted({
+          name: fullName.trim(),
+          phone: phone.trim(),
+          service: 'Flight Booking',
+          details: payload
+        })
+      }
     } finally {
       setSubmitting(false)
     }
@@ -169,15 +146,13 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
   const handleReset = () => {
     setConfirmedBooking(null)
     setFullName('')
-    setEmail('')
     setPhone('')
-    setDeparture('')
-    setDestination('')
     setAddress('')
     setStateVal('')
     setZipCode('')
     setTcpaConsent(true)
   }
+
 
   return (
     <div className="flight-card-container" id="flight-search-card">
@@ -189,7 +164,7 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
           </div>
           <h2 className="flight-card-main-title">Compare Flight Deals & Quotes</h2>
           <p className="flight-card-main-subtitle">
-            Fill in your route and passenger details to receive competitive airfare quotes directly.
+            Fill in your passenger details to receive competitive airfare quotes directly.
           </p>
         </div>
 
@@ -229,74 +204,14 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
           {/* ActiveProspect TrustedForm Certificate Hidden Input Field */}
           <input type="hidden" id="xxTrustedFormCertUrl" name="xxTrustedFormCertUrl" />
 
-          {/* Section 1: Route Details (Departure & Destination text fields) */}
+          {/* Passenger Contact & Address Details */}
           <div className="flight-form-section">
             <h3 className="flight-section-heading">
-              <span className="step-badge">1</span> Flight Route
+              <span className="step-badge">1</span> Passenger Details
             </h3>
 
-            <div className="flight-route-row">
-              {/* Departure */}
-              <div className="form-field">
-                <label className="field-label" htmlFor="flight-departure">
-                  <FaPlaneDeparture className="field-label-icon" />
-                  Departure <span className="required-dot">*</span>
-                </label>
-                <div className="input-with-icon">
-                  <FaPlaneDeparture className="input-icon" />
-                  <input
-                    id="flight-departure"
-                    type="text"
-                    className="flight-input"
-                    placeholder="Enter departure"
-                    value={departure}
-                    onChange={(e) => setDeparture(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Swap Button */}
-              <button
-                type="button"
-                className="swap-cities-btn"
-                onClick={handleSwap}
-                title="Swap Departure and Destination"
-                aria-label="Swap Departure and Destination"
-              >
-                <FaExchangeAlt />
-              </button>
-
-              {/* Destination */}
-              <div className="form-field">
-                <label className="field-label" htmlFor="flight-destination">
-                  <FaPlaneArrival className="field-label-icon" />
-                  Destination <span className="required-dot">*</span>
-                </label>
-                <div className="input-with-icon">
-                  <FaPlaneArrival className="input-icon" />
-                  <input
-                    id="flight-destination"
-                    type="text"
-                    className="flight-input"
-                    placeholder="Enter destination"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Passenger Contact & Address Details */}
-          <div className="flight-form-section">
-            <h3 className="flight-section-heading">
-              <span className="step-badge">2</span> Passenger Details
-            </h3>
-
-            {/* Row A: Full Name, Email, Phone */}
-            <div className="contact-row">
+            {/* Row A: Full Name, Phone */}
+            <div className="contact-row contact-row-2">
               {/* Full Name */}
               <div className="form-field">
                 <label className="field-label" htmlFor="flight-full-name">
@@ -312,26 +227,6 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
                     placeholder="e.g. Eleanor Vance"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Email Address */}
-              <div className="form-field">
-                <label className="field-label" htmlFor="flight-email-address">
-                  <FaEnvelope className="field-label-icon" />
-                  Email Address <span className="required-dot">*</span>
-                </label>
-                <div className="input-with-icon">
-                  <FaEnvelope className="input-icon" />
-                  <input
-                    id="flight-email-address"
-                    type="email"
-                    className="flight-input"
-                    placeholder="eleanor@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -359,7 +254,7 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
             </div>
 
             {/* Row B: Address, State, Zip Code */}
-            <div className="contact-row">
+            <div className="contact-row contact-row-3" style={{ marginTop: '1rem' }}>
               {/* Address */}
               <div className="form-field">
                 <label className="field-label" htmlFor="flight-address">
@@ -497,22 +392,14 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
               </div>
 
               <div className="ticket-body">
-                {/* Visual Route */}
-                <div className="ticket-route-display">
-                  <div className="route-point">
-                    <div className="route-point-code">{confirmedBooking.departure}</div>
-                    <div className="route-point-label">Departure</div>
+                {/* Visual Trip Badge Banner */}
+                <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem' }}>
+                    <FaPlane />
                   </div>
-
-                  <div className="route-plane-indicator">
-                    <FaPlane style={{ transform: 'rotate(45deg)', fontSize: '1.25rem' }} />
-                    <div className="route-line"></div>
-                    <span className="route-type-label">{confirmedBooking.trip_type}</span>
-                  </div>
-
-                  <div className="route-point">
-                    <div className="route-point-code">{confirmedBooking.destination}</div>
-                    <div className="route-point-label">Destination</div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>Flight Booking Assistance</div>
+                    <div style={{ fontSize: '0.82rem', color: '#64748b' }}>Trip Type: <strong style={{ color: '#2563eb' }}>{confirmedBooking.trip_type}</strong></div>
                   </div>
                 </div>
 
@@ -527,10 +414,6 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
                     <div className="ticket-field-val">{confirmedBooking.trip_type}</div>
                   </div>
                   <div className="ticket-field">
-                    <div className="ticket-field-label">Email Address</div>
-                    <div className="ticket-field-val">{confirmedBooking.email}</div>
-                  </div>
-                  <div className="ticket-field">
                     <div className="ticket-field-label">Phone Number</div>
                     <div className="ticket-field-val">{confirmedBooking.phone}</div>
                   </div>
@@ -538,7 +421,7 @@ export default function FlightCard({ prefillDeparture = '', prefillDestination =
                     <div className="ticket-field-label">Address</div>
                     <div className="ticket-field-val">{confirmedBooking.address}</div>
                   </div>
-                  <div className="ticket-field">
+                  <div className="ticket-field ticket-field-full">
                     <div className="ticket-field-label">State / Zip</div>
                     <div className="ticket-field-val">{confirmedBooking.state} - {confirmedBooking.zip_code}</div>
                   </div>
