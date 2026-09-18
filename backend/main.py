@@ -4,7 +4,7 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, Dict
 
 # Automatically load environment variables from .env file
 try:
@@ -171,6 +171,7 @@ class ContactConfigRequest(BaseModel):
     modal_message: Optional[str] = "Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates."
     auto_redirect: Optional[bool] = True
     auto_redirect_seconds: Optional[int] = 5
+    services: Optional[Dict[str, str]] = None
 
 
 

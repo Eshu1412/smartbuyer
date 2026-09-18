@@ -11,14 +11,20 @@ import {
   FaPlay 
 } from 'react-icons/fa'
 import './ContactRedirectModal.css'
+import { getServicePhone } from '../utils/serviceContact'
 
 export default function ContactRedirectModal({ 
   isOpen, 
   onClose, 
   config, 
-  leadData = null 
+  leadData = null,
+  overridePhone = null
 }) {
-  const phone = config?.phone_number || '+18558312264'
+  const resolvedPhone = (overridePhone !== null && overridePhone !== undefined)
+    ? overridePhone
+    : (leadData?.service ? getServicePhone(leadData.service, leadData.category, config) : (config?.phone_number || ''))
+
+  const phone = (resolvedPhone || '').trim()
   const cleanPhone = phone.replace(/[^0-9+]/g, '')
   const title = config?.modal_title || 'Speak With an Advisor Right Now'
   const message = config?.modal_message || 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.'
@@ -62,7 +68,8 @@ export default function ContactRedirectModal({
     window.location.href = `tel:${cleanPhone}`
   }
 
-  if (!isOpen) return null
+  // STRICT REQUIREMENT: If the phone number is not provided, the contact window MUST NOT display
+  if (!isOpen || !phone) return null
 
   return (
     <AnimatePresence>

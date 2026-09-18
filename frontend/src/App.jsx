@@ -15,6 +15,7 @@ import ThankYouView from './components/ThankYouView'
 import AdminDashboard from './components/Admin/AdminDashboard'
 import TravelServicesView from './components/Travel/TravelServicesView'
 import ContactRedirectModal from './components/ContactRedirectModal'
+import { DEFAULT_CONTACT_CONFIG, getServicePhone } from './utils/serviceContact'
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false)
@@ -29,26 +30,13 @@ export default function App() {
 
   // On-screen Contact & Redirect Window state
   const [showContactModal, setShowContactModal] = useState(false)
+  const [activeServicePhone, setActiveServicePhone] = useState('')
   const [contactConfig, setContactConfig] = useState(() => {
     try {
       const cached = localStorage.getItem('contact_config')
-      return cached ? JSON.parse(cached) : {
-        enabled: true,
-        phone_number: '+18558312264',
-        modal_title: 'Speak With an Advisor Right Now',
-        modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.',
-        auto_redirect: true,
-        auto_redirect_seconds: 5
-      }
+      return cached ? JSON.parse(cached) : DEFAULT_CONTACT_CONFIG
     } catch {
-      return {
-        enabled: true,
-        phone_number: '+18558312264',
-        modal_title: 'Speak With an Advisor Right Now',
-        modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.',
-        auto_redirect: true,
-        auto_redirect_seconds: 5
-      }
+      return DEFAULT_CONTACT_CONFIG
     }
   })
 
@@ -81,6 +69,15 @@ export default function App() {
     fetchContactSettings()
   }, [])
 
+  // Listen to contact config updates across tabs or admin panel saves
+  useEffect(() => {
+    const handleConfigSync = (e) => {
+      if (e?.detail) setContactConfig(e.detail)
+    }
+    window.addEventListener('contact_config_updated', handleConfigSync)
+    return () => window.removeEventListener('contact_config_updated', handleConfigSync)
+  }, [])
+
   const handleSplashComplete = useCallback(() => {
     setSplashDone(true)
   }, [])
@@ -89,6 +86,10 @@ export default function App() {
     if (window.location.hash === '#admin') {
       window.location.hash = ''
     }
+    try {
+      const cached = localStorage.getItem('contact_config')
+      if (cached) setContactConfig(JSON.parse(cached))
+    } catch {}
     setViewState('home')
     setActiveVertical('')
     setActiveSub('')
@@ -118,8 +119,27 @@ export default function App() {
     setSubmittedLead(leadInfo)
     setViewState('thank-you')
     if (quoteOpen) setQuoteOpen(false)
-    if (contactConfig?.enabled !== false) {
+
+    // Pull absolute latest config (from localStorage if present, or state)
+    let liveConfig = contactConfig
+    try {
+      const cached = localStorage.getItem('contact_config')
+      if (cached) {
+        liveConfig = JSON.parse(cached)
+        setContactConfig(liveConfig)
+      }
+    } catch {}
+
+    // Resolve individual service hotline phone number
+    const sPhone = getServicePhone(leadInfo?.service, leadInfo?.category, liveConfig)
+
+    // STRICT RULE: If the number is not provided, the on-screen contact window will NOT display
+    if (liveConfig?.enabled !== false && sPhone && sPhone.trim().length > 0) {
+      setActiveServicePhone(sPhone.trim())
       setShowContactModal(true)
+    } else {
+      setActiveServicePhone('')
+      setShowContactModal(false)
     }
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -252,6 +272,7 @@ export default function App() {
         onClose={() => setShowContactModal(false)}
         config={contactConfig}
         leadData={submittedLead}
+        overridePhone={activeServicePhone}
       />
     </>
   )

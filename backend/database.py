@@ -1111,7 +1111,16 @@ DEFAULT_CONTACT_CONFIG = {
     "modal_title": "Speak With an Advisor Right Now",
     "modal_message": "Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.",
     "auto_redirect": True,
-    "auto_redirect_seconds": 5
+    "auto_redirect_seconds": 5,
+    "services": {
+        "Health Insurance": "+18558312264",
+        "Home Improvement": "+18558312264",
+        "Auto & Home Insurance": "+18558312264",
+        "Debt Relief": "+18558312264",
+        "Legal Help": "+18558312264",
+        "Medicare": "+18558312264",
+        "Flight Booking": "+18558312264"
+    }
 }
 
 _settings_table_ensured = False
@@ -1194,18 +1203,26 @@ def set_app_setting(key: str, value: str):
 def get_contact_config() -> dict:
     raw = get_app_setting("contact_config", None)
     if not raw:
-        return dict(DEFAULT_CONTACT_CONFIG)
+        return json.loads(json.dumps(DEFAULT_CONTACT_CONFIG))
     try:
         data = json.loads(raw)
-        merged = dict(DEFAULT_CONTACT_CONFIG)
-        merged.update(data)
+        merged = json.loads(json.dumps(DEFAULT_CONTACT_CONFIG))
+        if "services" in data and isinstance(data["services"], dict):
+            merged["services"].update(data["services"])
+        for k, v in data.items():
+            if k != "services":
+                merged[k] = v
         return merged
     except Exception:
-        return dict(DEFAULT_CONTACT_CONFIG)
+        return json.loads(json.dumps(DEFAULT_CONTACT_CONFIG))
 
 def update_contact_config(new_config: dict) -> dict:
     current = get_contact_config()
-    current.update(new_config)
+    if "services" in new_config and isinstance(new_config["services"], dict):
+        current["services"].update(new_config["services"])
+    for k, v in new_config.items():
+        if k != "services":
+            current[k] = v
     set_app_setting("contact_config", json.dumps(current))
     return current
 

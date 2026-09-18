@@ -4,8 +4,14 @@ import {
   FiServer, FiCpu, FiHardDrive, FiCheckCircle, 
   FiRefreshCw, FiDownload, FiUpload, FiShield, 
   FiSliders, FiActivity, FiDatabase, FiFileText, FiClock,
-  FiPhoneCall, FiMessageSquare, FiEye, FiSave, FiCheck, FiSettings
+  FiPhoneCall, FiMessageSquare, FiEye, FiSave, FiCheck, FiSettings,
+  FiX, FiAlertTriangle, FiPhone, FiRotateCcw, FiSlash
 } from 'react-icons/fi';
+import { 
+  FaHeartbeat, FaCar, FaTools, FaHandHoldingUsd, 
+  FaGavel, FaPlane, FaShieldAlt 
+} from 'react-icons/fa';
+import { DEFAULT_CONTACT_CONFIG, SERVICE_VERTICALS } from '../../utils/serviceContact';
 import ContactRedirectModal from '../ContactRedirectModal';
 
 export default function AdminSettings({ onShowSnackbar }) {
@@ -26,31 +32,28 @@ export default function AdminSettings({ onShowSnackbar }) {
     'Flight Booking': true
   });
 
+  const SERVICE_ICONS = {
+    'Health Insurance': { icon: FaHeartbeat, color: '#10B981', bg: 'rgba(16, 185, 129, 0.12)', cat: 'Healthcare' },
+    'Medicare': { icon: FaShieldAlt, color: '#06B6D4', bg: 'rgba(6, 182, 212, 0.12)', cat: 'Seniors' },
+    'Auto & Home Insurance': { icon: FaCar, color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', cat: 'Insurance' },
+    'Home Improvement': { icon: FaTools, color: '#D97706', bg: 'rgba(217, 119, 6, 0.12)', cat: 'Home Services' },
+    'Debt Relief': { icon: FaHandHoldingUsd, color: '#EF4444', bg: 'rgba(239, 68, 68, 0.12)', cat: 'Debt & Credit' },
+    'Legal Help': { icon: FaGavel, color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.12)', cat: 'Legal Desk' },
+    'Flight Booking': { icon: FaPlane, color: '#2563EB', bg: 'rgba(37, 99, 235, 0.12)', cat: 'Aviation Desk' },
+  };
+
   // Contact Us & Redirection Config State
   const [contactConfig, setContactConfig] = useState(() => {
     try {
       const cached = localStorage.getItem('contact_config');
-      return cached ? JSON.parse(cached) : {
-        enabled: true,
-        phone_number: '+18558312264',
-        modal_title: 'Speak With an Advisor Right Now',
-        modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.',
-        auto_redirect: true,
-        auto_redirect_seconds: 5
-      };
+      return cached ? JSON.parse(cached) : DEFAULT_CONTACT_CONFIG;
     } catch {
-      return {
-        enabled: true,
-        phone_number: '+18558312264',
-        modal_title: 'Speak With an Advisor Right Now',
-        modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.',
-        auto_redirect: true,
-        auto_redirect_seconds: 5
-      };
+      return DEFAULT_CONTACT_CONFIG;
     }
   });
   const [savingContact, setSavingContact] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewService, setPreviewService] = useState('Health Insurance');
 
   const checkPing = async () => {
     setPinging(true);
@@ -75,8 +78,10 @@ export default function AdminSettings({ onShowSnackbar }) {
         const res = await fetch('/api/settings/contact');
         if (res.ok) {
           const data = await res.json();
-          setContactConfig(data);
-          localStorage.setItem('contact_config', JSON.stringify(data));
+          const mergedServices = { ...(DEFAULT_CONTACT_CONFIG.services || {}), ...(data.services || {}) };
+          const fullConfig = { ...data, services: mergedServices };
+          setContactConfig(fullConfig);
+          localStorage.setItem('contact_config', JSON.stringify(fullConfig));
         }
       } catch (err) {
         console.warn('Could not fetch remote contact config, using local cache', err);
@@ -96,10 +101,12 @@ export default function AdminSettings({ onShowSnackbar }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setContactConfig(data.config || contactConfig);
-        localStorage.setItem('contact_config', JSON.stringify(data.config || contactConfig));
+        const updatedConfig = data.config || contactConfig;
+        setContactConfig(updatedConfig);
+        localStorage.setItem('contact_config', JSON.stringify(updatedConfig));
+        window.dispatchEvent(new CustomEvent('contact_config_updated', { detail: updatedConfig }));
         if (onShowSnackbar) {
-          onShowSnackbar('Contact Us configuration & form redirect number saved!', 'success');
+          onShowSnackbar('Contact Us configuration & individual service hotlines saved!', 'success');
         }
       } else {
         throw new Error(data.detail || 'Failed to save settings');
@@ -193,6 +200,44 @@ export default function AdminSettings({ onShowSnackbar }) {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
+
+  const handleServicePhoneChange = (serviceTitle, value) => {
+    setContactConfig(prev => ({
+      ...prev,
+      services: {
+        ...(prev.services || {}),
+        [serviceTitle]: value
+      }
+    }));
+  };
+
+  const handleSetAllDefault = () => {
+    const defaultServices = {};
+    SERVICE_VERTICALS.forEach(svc => {
+      defaultServices[svc.title] = '+18558312264';
+    });
+    setContactConfig(prev => ({
+      ...prev,
+      services: defaultServices
+    }));
+    if (onShowSnackbar) onShowSnackbar('All 7 services reset to default hotline (+18558312264)', 'info');
+  };
+
+  const handleClearAll = () => {
+    const emptyServices = {};
+    SERVICE_VERTICALS.forEach(svc => {
+      emptyServices[svc.title] = '';
+    });
+    setContactConfig(prev => ({
+      ...prev,
+      services: emptyServices
+    }));
+    if (onShowSnackbar) onShowSnackbar('Cleared all hotlines. The contact window is now suppressed for all services until numbers are entered.', 'info');
+  };
+
+  const servicesMap = contactConfig.services || {};
+  const totalServices = SERVICE_VERTICALS.length;
+  const activeCount = SERVICE_VERTICALS.filter(s => (servicesMap[s.title] || '').trim().length > 0).length;
 
   return (
     <motion.div
@@ -348,28 +393,52 @@ export default function AdminSettings({ onShowSnackbar }) {
           </div>
         </div>
 
-        {/* Full-Width Section: Contact Us Config Number & On-Screen Form Redirection */}
-        <div className="admin-panel" style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
-          <div className="admin-panel-header" style={{ flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h3 className="admin-panel-title">
+        {/* Full-Width Section: Individual Service Hotlines & Lead Redirection */}
+        <div className="admin-contact-panel">
+          <div className="admin-contact-header-row">
+            <div className="admin-contact-title-area">
+              <h3 className="admin-contact-title">
                 <FiPhoneCall style={{ color: 'var(--md-primary)' }} />
-                Contact Us Config Number & Lead Redirection
+                Direct Contact Hotlines & Lead Redirection
               </h3>
-              <span style={{ fontSize: '0.85rem', color: 'var(--md-on-surface-variant)' }}>
-                Configure the direct hotline number and automatic on-screen message window displayed after any customer submits a form
-              </span>
+              <p className="admin-contact-subtitle">
+                Configure individual telephone hotlines for each service vertical. 
+                <strong> Important:</strong> If a service phone number is left blank, the on-screen contact window will <strong>NOT display</strong> when a user submits a form for that service.
+              </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <div className="admin-contact-actions">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--md-on-surface-variant)', fontWeight: 600 }}>Preview For:</span>
+                <select
+                  className="admin-select"
+                  style={{ padding: '0.45rem 2rem 0.45rem 0.75rem', fontSize: '0.82rem' }}
+                  value={previewService}
+                  onChange={(e) => setPreviewService(e.target.value)}
+                >
+                  {SERVICE_VERTICALS.map(s => (
+                    <option key={s.id} value={s.title}>{s.title}</option>
+                  ))}
+                </select>
+              </div>
+
               <button 
                 type="button" 
                 className="admin-btn-secondary" 
-                onClick={() => setPreviewOpen(true)}
-                title="Preview the on-screen customer message window"
+                onClick={() => {
+                  const phoneForPreview = (contactConfig.services?.[previewService] || '').trim();
+                  if (!phoneForPreview) {
+                    if (onShowSnackbar) {
+                      onShowSnackbar(`"${previewService}" has no phone number set. In live mode the contact window will NOT display.`, 'warning');
+                    }
+                  }
+                  setPreviewOpen(true);
+                }}
+                title="Preview the customer on-screen message window for the selected service"
               >
-                <FiEye /> Preview Message Window
+                <FiEye /> Preview Window
               </button>
+
               <button 
                 type="button" 
                 className="admin-btn-primary" 
@@ -381,127 +450,225 @@ export default function AdminSettings({ onShowSnackbar }) {
             </div>
           </div>
 
-          <form onSubmit={handleSaveContactConfig} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-              {/* Phone Number Field */}
-              <div className="admin-form-group">
-                <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
-                  Primary Contact Hotline Phone Number *
-                </label>
-                <div className="admin-input-wrapper">
-                  <FiPhoneCall className="admin-input-icon" style={{ color: 'var(--md-primary)' }} />
+          <form onSubmit={handleSaveContactConfig} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* SUB-SECTION 1: Individual Service Hotline Grid */}
+            <div className="admin-services-hotlines-section">
+              <div className="admin-services-toolbar">
+                <div className="admin-services-stats">
+                  <span>Per-Service Numbers:</span>
+                  <span className={`status-pill ${activeCount === totalServices ? 'qualified' : activeCount > 0 ? 'contacted' : 'closed'}`}>
+                    {activeCount} of {totalServices} Active
+                  </span>
+                  {activeCount < totalServices && (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--md-on-surface-variant)' }}>
+                      ({totalServices - activeCount} service{totalServices - activeCount > 1 ? 's' : ''} suppressed)
+                    </span>
+                  )}
+                </div>
+
+                <div className="admin-services-tools-btn-group">
+                  <button
+                    type="button"
+                    className="admin-pill-btn"
+                    onClick={handleSetAllDefault}
+                    title="Populate +18558312264 across all 7 services"
+                  >
+                    <FiRotateCcw /> Set All to +18558312264
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-pill-btn"
+                    onClick={handleClearAll}
+                    title="Clear all phone numbers to suppress modal across all services"
+                  >
+                    <FiSlash /> Clear All
+                  </button>
+                </div>
+              </div>
+
+              {/* 7 Services Grid */}
+              <div className="admin-services-grid">
+                {SERVICE_VERTICALS.map(svc => {
+                  const currentPhone = contactConfig.services?.[svc.title] ?? '';
+                  const hasPhone = currentPhone.trim().length > 0;
+                  const iconMeta = SERVICE_ICONS[svc.title] || { icon: FiPhone, color: 'var(--md-primary)', bg: 'var(--md-primary-container)', cat: svc.tag };
+                  const IconComp = iconMeta.icon;
+
+                  return (
+                    <div 
+                      key={svc.id} 
+                      className={`admin-service-card ${hasPhone ? 'active-state' : 'disabled-state'}`}
+                    >
+                      <div className="admin-service-card-header">
+                        <div className="admin-service-title-wrap">
+                          <div 
+                            className="admin-service-icon-box"
+                            style={{ background: iconMeta.bg, color: iconMeta.color }}
+                          >
+                            <IconComp />
+                          </div>
+                          <div>
+                            <h4 className="admin-service-name">{svc.title}</h4>
+                            <span className="admin-service-tag">{iconMeta.cat}</span>
+                          </div>
+                        </div>
+
+                        <span className={`admin-service-badge ${hasPhone ? 'active' : 'disabled'}`}>
+                          {hasPhone ? '● Active' : '○ Suppressed'}
+                        </span>
+                      </div>
+
+                      <div className="admin-service-input-wrap">
+                        <FiPhoneCall className="admin-input-icon" style={{ color: hasPhone ? iconMeta.color : 'var(--md-on-surface-variant)' }} />
+                        <input
+                          type="text"
+                          id={`service-phone-input-${svc.id}`}
+                          name={`service-phone-${svc.id}`}
+                          className="admin-service-input"
+                          placeholder="e.g. +18558312264 (leave blank to hide)"
+                          value={currentPhone}
+                          onChange={(e) => handleServicePhoneChange(svc.title, e.target.value)}
+                        />
+                        {hasPhone && (
+                          <button
+                            type="button"
+                            id={`clear-btn-${svc.id}`}
+                            className="admin-service-clear-btn"
+                            title="Clear this service number"
+                            onClick={() => handleServicePhoneChange(svc.title, '')}
+                          >
+                            <FiX />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className={`admin-service-caption ${hasPhone ? 'active' : 'disabled'}`}>
+                        {hasPhone ? (
+                          <>✓ Modal will display <strong>{currentPhone.trim()}</strong> upon form submission.</>
+                        ) : (
+                          <>⚠️ No number set — on-screen contact modal will <strong>NOT display</strong>.</>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* SUB-SECTION 2: Global Appearance & Timing Settings */}
+            <div className="admin-contact-global-grid">
+              <div className="admin-contact-subcard">
+                <div className="admin-contact-subcard-title">
+                  <FiMessageSquare style={{ color: 'var(--md-primary)' }} />
+                  Message Window Copy & Headline
+                </div>
+
+                <div className="admin-form-group">
+                  <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
+                    Popup Window Headline
+                  </label>
                   <input
                     type="text"
                     className="admin-input"
-                    placeholder="e.g. +18558312264"
-                    value={contactConfig.phone_number || ''}
-                    onChange={(e) => setContactConfig({ ...contactConfig, phone_number: e.target.value })}
-                    required
+                    style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px' }}
+                    placeholder="e.g. Speak With an Advisor Right Now"
+                    value={contactConfig.modal_title || ''}
+                    onChange={(e) => setContactConfig({ ...contactConfig, modal_title: e.target.value })}
                   />
+                  <span style={{ fontSize: '0.78rem', color: 'var(--md-on-surface-variant)' }}>
+                    Headline displayed inside the customer message popup window.
+                  </span>
                 </div>
-                <span style={{ fontSize: '0.78rem', color: 'var(--md-on-surface-variant)' }}>
-                  Customers can click to instantly call this number after submitting any quote or flight request.
-                </span>
-              </div>
 
-              {/* Window Title */}
-              <div className="admin-form-group">
-                <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
-                  On-Screen Message Window Title
-                </label>
-                <input
-                  type="text"
-                  className="admin-input"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--md-outline-variant)', background: 'var(--md-surface)', color: 'var(--md-on-surface)' }}
-                  placeholder="e.g. Speak With an Advisor Right Now"
-                  value={contactConfig.modal_title || ''}
-                  onChange={(e) => setContactConfig({ ...contactConfig, modal_title: e.target.value })}
-                />
-                <span style={{ fontSize: '0.78rem', color: 'var(--md-on-surface-variant)' }}>
-                  Headline displayed prominently inside the customer message popup window.
-                </span>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>
-              {/* Auto Redirect Countdown */}
-              <div className="admin-form-group">
-                <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
-                  Auto-Redirect Timer (Seconds)
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <input
-                    type="number"
-                    min="2"
-                    max="30"
-                    className="admin-input"
-                    style={{ width: '100px', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--md-outline-variant)', background: 'var(--md-surface)', color: 'var(--md-on-surface)' }}
-                    value={contactConfig.auto_redirect_seconds || 5}
-                    onChange={(e) => setContactConfig({ ...contactConfig, auto_redirect_seconds: Number(e.target.value) })}
-                    disabled={!contactConfig.auto_redirect}
-                  />
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--md-on-surface)' }}>
-                    <input
-                      type="checkbox"
-                      checked={Boolean(contactConfig.auto_redirect)}
-                      onChange={(e) => setContactConfig({ ...contactConfig, auto_redirect: e.target.checked })}
-                    />
-                    Enable Auto-Redirect Countdown Bar to Call Hotline
+                <div className="admin-form-group">
+                  <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
+                    Customer Notice Message
                   </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Custom Subtitle / Message */}
-            <div className="admin-form-group">
-              <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
-                Customer Notice Message
-              </label>
-              <textarea
-                rows="2"
-                className="admin-input"
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--md-outline-variant)', background: 'var(--md-surface)', color: 'var(--md-on-surface)', resize: 'vertical' }}
-                placeholder="Enter reassurance text displayed in the message window..."
-                value={contactConfig.modal_message || ''}
-                onChange={(e) => setContactConfig({ ...contactConfig, modal_message: e.target.value })}
-              />
-            </div>
-
-            {/* Status Activation Toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--md-surface-container-low)', borderRadius: '12px', border: '1px solid var(--md-outline-variant)' }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--md-on-surface)' }}>
-                  Message Window Activation Status
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--md-on-surface-variant)' }}>
-                  When enabled, any customer submitting a quote or flight request will see this message window immediately on screen.
+                  <textarea
+                    rows="3"
+                    className="admin-input"
+                    style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', resize: 'vertical' }}
+                    placeholder="Enter reassurance text displayed in the message window..."
+                    value={contactConfig.modal_message || ''}
+                    onChange={(e) => setContactConfig({ ...contactConfig, modal_message: e.target.value })}
+                  />
                 </div>
               </div>
 
-              <button
-                type="button"
-                className={`status-pill ${contactConfig.enabled ? 'qualified' : 'closed'}`}
-                style={{ cursor: 'pointer', padding: '0.4rem 1rem', fontSize: '0.85rem' }}
-                onClick={() => setContactConfig({ ...contactConfig, enabled: !contactConfig.enabled })}
-              >
-                {contactConfig.enabled ? 'ACTIVE (DISPLAYING)' : 'DISABLED (OFF)'}
-              </button>
+              <div className="admin-contact-subcard">
+                <div className="admin-contact-subcard-title">
+                  <FiClock style={{ color: 'var(--md-primary)' }} />
+                  Redirection Timer & Master Switch
+                </div>
+
+                <div className="admin-form-group">
+                  <label className="admin-form-label" style={{ fontWeight: 700, color: 'var(--md-on-surface)' }}>
+                    Auto-Redirect Timer (Seconds)
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <input
+                      type="number"
+                      min="2"
+                      max="30"
+                      className="admin-input"
+                      style={{ width: '90px', padding: '0.65rem 0.75rem', borderRadius: '10px' }}
+                      value={contactConfig.auto_redirect_seconds || 5}
+                      onChange={(e) => setContactConfig({ ...contactConfig, auto_redirect_seconds: Number(e.target.value) })}
+                      disabled={!contactConfig.auto_redirect}
+                    />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--md-on-surface)' }}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(contactConfig.auto_redirect)}
+                        onChange={(e) => setContactConfig({ ...contactConfig, auto_redirect: e.target.checked })}
+                      />
+                      Enable Auto-Redirect Countdown Bar
+                    </label>
+                  </div>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--md-on-surface-variant)', marginTop: '0.35rem' }}>
+                    When enabled, an interactive countdown bar automatically triggers the phone dialer after expiration.
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--md-surface-container-high)', borderRadius: '12px', border: '1px solid var(--md-outline-variant)', marginTop: 'auto' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--md-on-surface)' }}>
+                      Master Modal Activation
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--md-on-surface-variant)' }}>
+                      Global toggle for all on-screen redirection modals.
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={`status-pill ${contactConfig.enabled ? 'qualified' : 'closed'}`}
+                    style={{ cursor: 'pointer', padding: '0.4rem 1rem', fontSize: '0.82rem' }}
+                    onClick={() => setContactConfig({ ...contactConfig, enabled: !contactConfig.enabled })}
+                  >
+                    {contactConfig.enabled ? 'GLOBAL ON' : 'GLOBAL OFF'}
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
         </div>
       </div>
 
       {/* Live Preview Modal */}
-      <ContactRedirectModal
-        isOpen={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        config={contactConfig}
-        leadData={{
-          service: 'Health Insurance',
-          name: 'Preview Customer',
-          phone: contactConfig.phone_number
-        }}
-      />
+      {previewOpen && (
+        <ContactRedirectModal
+          isOpen={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          config={contactConfig}
+          leadData={{
+            service: previewService,
+            name: 'Preview Customer',
+            phone: contactConfig.services?.[previewService] || contactConfig.phone_number
+          }}
+          overridePhone={contactConfig.services?.[previewService] || ''}
+        />
+      )}
     </motion.div>
   );
 }
