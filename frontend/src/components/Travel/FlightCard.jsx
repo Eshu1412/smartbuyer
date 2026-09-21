@@ -430,10 +430,14 @@ export default function FlightCard({ onFormSubmitted }) {
                       <div className="ticket-field-label">TCPA Compliance Verification</div>
                       <div className="ticket-field-val ticket-tf-certified">
                         <FaShieldAlt style={{ color: '#10b981', marginRight: '6px' }} />
-                        TrustedForm Certificate Recorded
-                        {confirmedBooking.trusted_form?.cert_id && (
-                          <span className="ticket-cert-id"> (ID: {confirmedBooking.trusted_form.cert_id})</span>
-                        )}
+                        <a
+                          href={confirmedBooking.trusted_form_cert_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#10b981', textDecoration: 'underline' }}
+                        >
+                          TrustedForm Certificate
+                        </a>
                       </div>
                     </div>
                   )}

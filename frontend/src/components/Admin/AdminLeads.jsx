@@ -318,10 +318,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
       'Household Size',
       'Date of Birth',
       'Status',
-      'TrustedForm Link',
-      'TrustedForm Retained',
-      'TrustedForm Cert ID',
-      'Notes',
+      'TrustedForm Certificate',
       'Created At'
     ];
 
@@ -331,25 +328,26 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
       return `"${str}"`;
     };
 
-    const rows = listToExport.map(l => [
-      l.id,
-      escapeCSV(l.first_name),
-      escapeCSV(l.last_name),
-      escapeCSV(l.email),
-      escapeCSV(l.phone),
-      escapeCSV(l.zip_code),
-      escapeCSV(l.service_type),
-      escapeCSV(l.current_provider || ''),
-      escapeCSV(l.annual_income_range || ''),
-      escapeCSV(l.household_size || ''),
-      escapeCSV(l.date_of_birth || ''),
-      escapeCSV(l.status),
-      escapeCSV(l.trusted_form_cert_url || ''),
-      l.trusted_form_retained ? 'Yes' : 'No',
-      escapeCSV(l.trusted_form_cert_id || ''),
-      escapeCSV(l.notes || ''),
-      escapeCSV(l.created_at)
-    ]);
+    const rows = listToExport.map(l => {
+      const tfUrl = (l.trusted_form_cert_url || '').trim();
+      const tfHyperlink = tfUrl ? `"=HYPERLINK(""${tfUrl.replace(/"/g, '""')}"", ""${tfUrl.replace(/"/g, '""')}"")"` : '""';
+      return [
+        l.id,
+        escapeCSV(l.first_name),
+        escapeCSV(l.last_name),
+        escapeCSV(l.email),
+        escapeCSV(l.phone),
+        escapeCSV(l.zip_code),
+        escapeCSV(l.service_type),
+        escapeCSV(l.current_provider || ''),
+        escapeCSV(l.annual_income_range || ''),
+        escapeCSV(l.household_size || ''),
+        escapeCSV(l.date_of_birth || ''),
+        escapeCSV(l.status),
+        tfHyperlink,
+        escapeCSV(l.created_at)
+      ];
+    });
 
     const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\r\n');
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -667,12 +665,8 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                               cursor: 'pointer' 
                             }}
                           >
-                            <FiShield /> {lead.trusted_form_retained ? 'Retained' : 'Certificate'} <FiExternalLink style={{ fontSize: '0.72rem', opacity: 0.8 }} />
+                            <FiShield /> Certificate <FiExternalLink style={{ fontSize: '0.72rem', opacity: 0.8 }} />
                           </a>
-                        ) : lead.trusted_form_retained ? (
-                          <span className="tf-badge">
-                            <FiShield /> Retained
-                          </span>
                         ) : (
                           <span className="tf-badge none">
                             Standard
@@ -1210,17 +1204,24 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                   {/* TrustedForm Verification */}
                   <div className="admin-detail-item" style={{ marginBottom: '1.5rem', background: 'var(--md-primary-container)', borderColor: 'var(--md-outline)' }}>
                     <div className="admin-detail-label" style={{ color: 'var(--md-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <FiShield /> ActiveProspect TrustedForm TCPA Certification
+                      <FiShield /> ActiveProspect TrustedForm Certificate
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <div>
-                        <span style={{ fontSize: '0.88rem', color: 'var(--md-on-surface)' }}>
-                          Retention Status: <strong>{selectedLead.trusted_form_retained ? 'Retained & Verified' : 'Standard Submission'}</strong>
-                        </span>
-                        {selectedLead.trusted_form_cert_id && (
-                          <div style={{ fontSize: '0.8rem', color: 'var(--md-on-surface-variant)', marginTop: '0.2rem' }}>
-                            Certificate ID: {selectedLead.trusted_form_cert_id}
-                          </div>
+                      <div style={{ maxWidth: '75%', wordBreak: 'break-all' }}>
+                        {selectedLead.trusted_form_cert_url ? (
+                          <a
+                            href={selectedLead.trusted_form_cert_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: 'var(--md-primary)', fontSize: '0.88rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', textDecoration: 'underline' }}
+                            title={selectedLead.trusted_form_cert_url}
+                          >
+                            {selectedLead.trusted_form_cert_url} <FiExternalLink style={{ flexShrink: 0 }} />
+                          </a>
+                        ) : (
+                          <span style={{ fontSize: '0.88rem', color: 'var(--md-on-surface-variant)' }}>
+                            No certificate recorded
+                          </span>
                         )}
                       </div>
                       {selectedLead.trusted_form_cert_url && (
@@ -1229,9 +1230,9 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                           target="_blank"
                           rel="noopener noreferrer"
                           className="admin-btn-secondary"
-                          style={{ fontSize: '0.82rem', padding: '0.4rem 0.8rem' }}
+                          style={{ fontSize: '0.82rem', padding: '0.4rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                         >
-                          Inspect Certificate <FiExternalLink />
+                          Open Certificate <FiExternalLink />
                         </a>
                       )}
                     </div>

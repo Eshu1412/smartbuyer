@@ -500,15 +500,16 @@ async def export_leads_csv(
 
     output = io.StringIO()
     output.write('\ufeff')  # BOM for UTF-8 Excel compatibility
-    writer = csv.writer(output, quoting=csv.QUOTE_ALL)
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
     writer.writerow([
         "ID", "First Name", "Last Name", "Email", "Phone", "Zip Code",
         "Service Type", "Current Provider", "Income Range", "Household Size",
-        "Date of Birth", "Status", "TrustedForm Link", "TrustedForm Retained",
-        "TrustedForm Cert ID", "Notes", "Created At"
+        "Date of Birth", "Status", "TrustedForm Certificate", "Created At"
     ])
 
     for l in leads_list:
+        cert_url = (l.get("trusted_form_cert_url") or "").strip()
+        tf_cell = f'=HYPERLINK("{cert_url}", "{cert_url}")' if cert_url else ""
         writer.writerow([
             l.get("id", ""),
             l.get("first_name", ""),
@@ -522,10 +523,7 @@ async def export_leads_csv(
             l.get("household_size", "") or "",
             l.get("date_of_birth", "") or "",
             l.get("status", ""),
-            l.get("trusted_form_cert_url", "") or "",
-            "Yes" if l.get("trusted_form_retained") else "No",
-            l.get("trusted_form_cert_id", "") or "",
-            l.get("notes", "") or "",
+            tf_cell,
             l.get("created_at", "")
         ])
 
