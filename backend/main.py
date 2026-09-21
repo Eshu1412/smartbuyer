@@ -1,10 +1,13 @@
 import os
 from pathlib import Path
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict
+import csv
+import io
+from datetime import datetime
 
 # Automatically load environment variables from .env file
 try:
@@ -460,7 +463,7 @@ async def get_leads_list(
     status: str = "", 
     service_type: str = "", 
     page: int = 1, 
-    per_page: int = 20,
+    per_page: int = 0,
     sort_by: str = "created_at",
     sort_order: str = "desc"
 ):
@@ -472,6 +475,68 @@ async def get_leads_list(
         per_page=per_page,
         sort_by=sort_by,
         sort_order=sort_order
+    )
+
+
+@app.get("/api/admin/leads/export-csv")
+async def export_leads_csv(
+    search: str = "",
+    status: str = "",
+    service_type: str = "",
+    sort_by: str = "created_at",
+    sort_order: str = "desc"
+):
+    """Export complete leads dataset to CSV with TrustedForm certificate links included."""
+    result = database.get_leads(
+        search=search,
+        status=status,
+        service_type=service_type,
+        page=1,
+        per_page=0,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
+    leads_list = result.get("leads", [])
+
+    output = io.StringIO()
+    output.write('\ufeff')  # BOM for UTF-8 Excel compatibility
+    writer = csv.writer(output, quoting=csv.QUOTE_ALL)
+    writer.writerow([
+        "ID", "First Name", "Last Name", "Email", "Phone", "Zip Code",
+        "Service Type", "Current Provider", "Income Range", "Household Size",
+        "Date of Birth", "Status", "TrustedForm Link", "TrustedForm Retained",
+        "TrustedForm Cert ID", "Notes", "Created At"
+    ])
+
+    for l in leads_list:
+        writer.writerow([
+            l.get("id", ""),
+            l.get("first_name", ""),
+            l.get("last_name", ""),
+            l.get("email", ""),
+            l.get("phone", ""),
+            l.get("zip_code", ""),
+            l.get("service_type", ""),
+            l.get("current_provider", "") or "",
+            l.get("annual_income_range", "") or "",
+            l.get("household_size", "") or "",
+            l.get("date_of_birth", "") or "",
+            l.get("status", ""),
+            l.get("trusted_form_cert_url", "") or "",
+            "Yes" if l.get("trusted_form_retained") else "No",
+            l.get("trusted_form_cert_id", "") or "",
+            l.get("notes", "") or "",
+            l.get("created_at", "")
+        ])
+
+    csv_data = output.getvalue()
+    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return Response(
+        content=csv_data,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="smartquotehub_customers_{timestamp_str}.csv"'
+        }
     )
 
 

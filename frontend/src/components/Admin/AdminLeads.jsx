@@ -14,6 +14,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
   const [statusFilter, setStatusFilter] = useState('all');
   const [serviceFilter, setServiceFilter] = useState(initialServiceFilter);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState('all'); // 'all' (Full List), '25', '50', '100', '15'
   const [totalPages, setTotalPages] = useState(1);
   const [totalLeads, setTotalLeads] = useState(0);
 
@@ -58,12 +59,13 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
   const fetchLeads = useCallback(async () => {
     setLoading(true);
     try {
+      const perPageValue = viewMode === 'kanban' ? '0' : (pageSize === 'all' ? '0' : pageSize);
       const params = new URLSearchParams({
         search,
         status: statusFilter,
         service_type: serviceFilter,
         page: page.toString(),
-        per_page: viewMode === 'kanban' ? '100' : '15',
+        per_page: perPageValue,
         sort_by: sortBy,
         sort_order: sortOrder
       });
@@ -77,7 +79,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, serviceFilter, page, sortBy, sortOrder, viewMode]);
+  }, [search, statusFilter, serviceFilter, page, pageSize, sortBy, sortOrder, viewMode]);
 
   useEffect(() => {
     fetchLeads();
@@ -301,44 +303,132 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
     setTimeout(() => setCopiedField(''), 2000);
   };
 
-  // CSV Export
-  const handleExportCSV = (exportSelected = false) => {
-    const listToExport = exportSelected 
-      ? leads.filter(l => selectedIds.includes(l.id))
-      : leads;
-
-    if (listToExport.length === 0) return;
+  // Safe Blob CSV Download Helper
+  const exportRecordsToCSV = (listToExport, fileName) => {
     const headers = [
-      'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Zip Code', 
-      'Service Type', 'Current Provider', 'Income Range', 'Status', 
-      'TrustedForm Retained', 'Created At'
+      'ID',
+      'First Name',
+      'Last Name',
+      'Email',
+      'Phone',
+      'Zip Code',
+      'Service Type',
+      'Current Provider',
+      'Income Range',
+      'Household Size',
+      'Date of Birth',
+      'Status',
+      'TrustedForm Link',
+      'TrustedForm Retained',
+      'TrustedForm Cert ID',
+      'Notes',
+      'Created At'
     ];
+
+    const escapeCSV = (val) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
 
     const rows = listToExport.map(l => [
       l.id,
-      `"${l.first_name}"`,
-      `"${l.last_name}"`,
-      `"${l.email}"`,
-      `"${l.phone}"`,
-      `"${l.zip_code}"`,
-      `"${l.service_type}"`,
-      `"${l.current_provider || ''}"`,
-      `"${l.annual_income_range || ''}"`,
-      `"${l.status}"`,
+      escapeCSV(l.first_name),
+      escapeCSV(l.last_name),
+      escapeCSV(l.email),
+      escapeCSV(l.phone),
+      escapeCSV(l.zip_code),
+      escapeCSV(l.service_type),
+      escapeCSV(l.current_provider || ''),
+      escapeCSV(l.annual_income_range || ''),
+      escapeCSV(l.household_size || ''),
+      escapeCSV(l.date_of_birth || ''),
+      escapeCSV(l.status),
+      escapeCSV(l.trusted_form_cert_url || ''),
       l.trusted_form_retained ? 'Yes' : 'No',
-      `"${l.created_at}"`
+      escapeCSV(l.trusted_form_cert_id || ''),
+      escapeCSV(l.notes || ''),
+      escapeCSV(l.created_at)
     ]);
 
-    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\r\n');
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `smartquotehub_leads_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.display = 'none';
+    link.href = url;
+    link.download = fileName;
+    link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    if (onShowSnackbar) onShowSnackbar(`Exported ${listToExport.length} leads to CSV`, 'success');
+
+    // Retain object URL for 60s to ensure Chromium/mobile browsers finish download with full filename
+    setTimeout(() => {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+      URL.revokeObjectURL(url);
+    }, 60000);
+  };
+
+  // CSV Export Handler
+  const handleExportCSV = async (exportSelected = false) => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    if (exportSelected) {
+      const listToExport = leads.filter(l => selectedIds.includes(l.id));
+      if (listToExport.length === 0) {
+        if (onShowSnackbar) onShowSnackbar('No selected customer records found to export', 'warning');
+        return;
+      }
+      exportRecordsToCSV(listToExport, `smartquotehub_selected_${todayStr}.csv`);
+      if (onShowSnackbar) onShowSnackbar(`Successfully exported ${listToExport.length} selected customers to CSV`, 'success');
+      return;
+    }
+
+    const fileName = `smartquotehub_customers_${todayStr}.csv`;
+
+    // Case 1: Full list is already loaded in current view
+    if (pageSize === 'all' && leads.length >= totalLeads && leads.length > 0) {
+      exportRecordsToCSV(leads, fileName);
+      if (onShowSnackbar) onShowSnackbar(`Successfully exported all ${leads.length} customer records to CSV`, 'success');
+      return;
+    }
+
+    // Case 2: Fetch all matching records from backend
+    if (onShowSnackbar) onShowSnackbar('Preparing complete customer export...', 'info');
+    try {
+      const params = new URLSearchParams({
+        search: search || '',
+        status: statusFilter || 'all',
+        service_type: serviceFilter || 'all',
+        page: '1',
+        per_page: '0',
+        sort_by: sortBy || 'created_at',
+        sort_order: sortOrder || 'desc'
+      });
+
+      const res = await fetch(`/api/leads?${params.toString()}`);
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      const data = await res.json();
+      const allLeads = data.leads || [];
+
+      if (allLeads.length === 0) {
+        if (onShowSnackbar) onShowSnackbar('No customer records found to export', 'warning');
+        return;
+      }
+
+      exportRecordsToCSV(allLeads, fileName);
+      if (onShowSnackbar) onShowSnackbar(`Successfully exported all ${allLeads.length} customers with TrustedForm links to CSV`, 'success');
+    } catch (err) {
+      console.error('CSV Export fallback error:', err);
+      if (leads.length > 0) {
+        exportRecordsToCSV(leads, fileName);
+        if (onShowSnackbar) onShowSnackbar(`Exported ${leads.length} available customer records to CSV`, 'warning');
+      } else {
+        if (onShowSnackbar) onShowSnackbar('Failed to export customer list to CSV', 'error');
+      }
+    }
   };
 
   // Group leads for Kanban board
@@ -418,8 +508,29 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
             </button>
           </div>
 
+          {/* Display Mode / Rows Selector */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ fontSize: '0.82rem', color: 'var(--md-on-surface-variant)', fontWeight: 600 }}>Show:</span>
+            <select
+              className="admin-select"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(e.target.value);
+                setPage(1);
+              }}
+              style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem' }}
+              title="Select number of customers to display"
+            >
+              <option value="all">Full List ({totalLeads})</option>
+              <option value="25">25 per page</option>
+              <option value="50">50 per page</option>
+              <option value="100">100 per page</option>
+              <option value="15">15 per page</option>
+            </select>
+          </div>
+
           {/* Action Buttons */}
-          <button className="admin-btn-secondary" onClick={() => handleExportCSV(false)} title="Export All to CSV">
+          <button className="admin-btn-secondary" onClick={() => handleExportCSV(false)} title="Export All Customers to CSV">
             <FiDownload /> Export CSV
           </button>
 
@@ -540,7 +651,25 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                         </div>
                       </td>
                       <td>
-                        {lead.trusted_form_retained ? (
+                        {lead.trusted_form_cert_url ? (
+                          <a
+                            href={lead.trusted_form_cert_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="tf-badge link"
+                            title={`Open TrustedForm Certificate:\n${lead.trusted_form_cert_url}`}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: '0.3rem', 
+                              textDecoration: 'none',
+                              cursor: 'pointer' 
+                            }}
+                          >
+                            <FiShield /> {lead.trusted_form_retained ? 'Retained' : 'Certificate'} <FiExternalLink style={{ fontSize: '0.72rem', opacity: 0.8 }} />
+                          </a>
+                        ) : lead.trusted_form_retained ? (
                           <span className="tf-badge">
                             <FiShield /> Retained
                           </span>
@@ -605,25 +734,52 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
 
           {/* Pagination */}
           <div className="admin-pagination">
-            <span>Showing {leads.length} of {totalLeads} total records</span>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <button
-                className="admin-btn-secondary"
-                disabled={page <= 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-              >
-                Previous
-              </button>
-              <span style={{ alignSelf: 'center', color: 'var(--md-on-surface)', fontWeight: 700, margin: '0 0.5rem' }}>
-                Page {page} of {totalPages}
-              </span>
-              <button
-                className="admin-btn-secondary"
-                disabled={page >= totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              >
-                Next
-              </button>
+            <span>
+              {pageSize === 'all'
+                ? `Showing all ${leads.length} of ${totalLeads} customer records`
+                : `Showing ${leads.length} of ${totalLeads} total records`}
+            </span>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
+                <span style={{ color: 'var(--md-on-surface-variant)' }}>Display:</span>
+                <select
+                  className="admin-select"
+                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.82rem', minWidth: 'auto' }}
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="all">Full List (All)</option>
+                  <option value="25">25 per page</option>
+                  <option value="50">50 per page</option>
+                  <option value="100">100 per page</option>
+                  <option value="15">15 per page</option>
+                </select>
+              </div>
+
+              {pageSize !== 'all' && (
+                <div style={{ display: 'inline-flex', gap: '0.4rem', alignItems: 'center' }}>
+                  <button
+                    className="admin-btn-secondary"
+                    disabled={page <= 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </button>
+                  <span style={{ alignSelf: 'center', color: 'var(--md-on-surface)', fontWeight: 700, margin: '0 0.4rem' }}>
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    className="admin-btn-secondary"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

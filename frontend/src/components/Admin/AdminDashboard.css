@@ -1662,6 +1662,20 @@ select.status-pill option {
   border-color: var(--md-outline-variant);
 }
 
+.tf-badge.link {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.tf-badge.link:hover {
+  background: var(--md-secondary);
+  color: #ffffff !important;
+  border-color: var(--md-secondary);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
 .admin-action-btn {
   background: var(--md-surface-container-high);
   border: 1px solid var(--md-outline-variant);

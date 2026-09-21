@@ -138,13 +138,18 @@ export default function AdminSettings({ onShowSnackbar }) {
       if (!res.ok) throw new Error('Backup generation failed');
       const backupData = await res.json();
       
-      // Trigger file download with clean attachment headers
+      // Trigger clean file download directly from in-memory backupData JSON
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = '/api/admin/backup/download';
+      a.href = url;
       a.setAttribute('download', `smartquotehub_turso_backup_${new Date().toISOString().slice(0, 10)}.json`);
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 30000);
 
       setLastBackupInfo({
         date: new Date().toLocaleTimeString(),

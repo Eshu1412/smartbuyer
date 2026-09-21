@@ -394,14 +394,21 @@ def get_leads(
     }
     order_col = valid_sort_cols.get(sort_by, "created_at")
     order_dir = "ASC" if sort_order.lower() == "asc" else "DESC"
-    offset = (page - 1) * per_page
+    is_unlimited = (per_page is None or per_page <= 0 or per_page >= 50000)
 
     if USE_TURSO:
         try:
-            results = batch_query_turso([
-                {"sql": f"SELECT COUNT(*) as count FROM leads {where}", "params": params},
-                {"sql": f"SELECT * FROM leads {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?", "params": params + [per_page, offset]}
-            ])
+            if is_unlimited:
+                results = batch_query_turso([
+                    {"sql": f"SELECT COUNT(*) as count FROM leads {where}", "params": params},
+                    {"sql": f"SELECT * FROM leads {where} ORDER BY {order_col} {order_dir}", "params": params}
+                ])
+            else:
+                offset = (page - 1) * per_page
+                results = batch_query_turso([
+                    {"sql": f"SELECT COUNT(*) as count FROM leads {where}", "params": params},
+                    {"sql": f"SELECT * FROM leads {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?", "params": params + [per_page, offset]}
+                ])
             count_rows = results[0]
             rows = results[1]
             total = count_rows[0].get("count", 0) if count_rows else 0
@@ -409,9 +416,9 @@ def get_leads(
             return {
                 "leads": rows,
                 "total": total,
-                "page": page,
-                "per_page": per_page,
-                "total_pages": max(1, (total + per_page - 1) // per_page),
+                "page": 1 if is_unlimited else page,
+                "per_page": total if is_unlimited else per_page,
+                "total_pages": 1 if is_unlimited or total == 0 else max(1, (total + per_page - 1) // per_page),
             }
         except Exception as e:
             print(f"[DB] Turso get_leads fallback ({e})")
@@ -421,19 +428,26 @@ def get_leads(
     cursor.execute(f"SELECT COUNT(*) FROM leads {where}", params)
     total = cursor.fetchone()[0]
 
-    cursor.execute(
-        f"SELECT * FROM leads {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?",
-        params + [per_page, offset],
-    )
+    if is_unlimited:
+        cursor.execute(
+            f"SELECT * FROM leads {where} ORDER BY {order_col} {order_dir}",
+            params,
+        )
+    else:
+        offset = (page - 1) * per_page
+        cursor.execute(
+            f"SELECT * FROM leads {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?",
+            params + [per_page, offset],
+        )
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
 
     return {
         "leads": rows,
         "total": total,
-        "page": page,
-        "per_page": per_page,
-        "total_pages": max(1, (total + per_page - 1) // per_page),
+        "page": 1 if is_unlimited else page,
+        "per_page": total if is_unlimited else per_page,
+        "total_pages": 1 if is_unlimited or total == 0 else max(1, (total + per_page - 1) // per_page),
     }
 
 
@@ -737,23 +751,30 @@ def get_flight_bookings(
     }
     order_col = valid_sort_cols.get(sort_by, "created_at")
     order_dir = "ASC" if sort_order.lower() == "asc" else "DESC"
-    offset = (page - 1) * per_page
+    is_unlimited = (per_page is None or per_page <= 0 or per_page >= 50000)
 
     if USE_TURSO:
         try:
-            results = batch_query_turso([
-                {"sql": f"SELECT COUNT(*) as count FROM flight_bookings {where}", "params": params},
-                {"sql": f"SELECT * FROM flight_bookings {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?", "params": params + [per_page, offset]}
-            ])
+            if is_unlimited:
+                results = batch_query_turso([
+                    {"sql": f"SELECT COUNT(*) as count FROM flight_bookings {where}", "params": params},
+                    {"sql": f"SELECT * FROM flight_bookings {where} ORDER BY {order_col} {order_dir}", "params": params}
+                ])
+            else:
+                offset = (page - 1) * per_page
+                results = batch_query_turso([
+                    {"sql": f"SELECT COUNT(*) as count FROM flight_bookings {where}", "params": params},
+                    {"sql": f"SELECT * FROM flight_bookings {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?", "params": params + [per_page, offset]}
+                ])
             count_rows = results[0]
             rows = results[1]
             total = count_rows[0].get("count", 0) if count_rows else 0
             return {
                 "bookings": rows,
                 "total": total,
-                "page": page,
-                "per_page": per_page,
-                "total_pages": max(1, (total + per_page - 1) // per_page),
+                "page": 1 if is_unlimited else page,
+                "per_page": total if is_unlimited else per_page,
+                "total_pages": 1 if is_unlimited or total == 0 else max(1, (total + per_page - 1) // per_page),
             }
         except Exception as e:
             print(f"[DB] Turso get_flight_bookings fallback ({e})")
@@ -763,19 +784,26 @@ def get_flight_bookings(
     cursor.execute(f"SELECT COUNT(*) FROM flight_bookings {where}", params)
     total = cursor.fetchone()[0]
 
-    cursor.execute(
-        f"SELECT * FROM flight_bookings {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?",
-        params + [per_page, offset],
-    )
+    if is_unlimited:
+        cursor.execute(
+            f"SELECT * FROM flight_bookings {where} ORDER BY {order_col} {order_dir}",
+            params,
+        )
+    else:
+        offset = (page - 1) * per_page
+        cursor.execute(
+            f"SELECT * FROM flight_bookings {where} ORDER BY {order_col} {order_dir} LIMIT ? OFFSET ?",
+            params + [per_page, offset],
+        )
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
 
     return {
         "bookings": rows,
         "total": total,
-        "page": page,
-        "per_page": per_page,
-        "total_pages": max(1, (total + per_page - 1) // per_page),
+        "page": 1 if is_unlimited else page,
+        "per_page": total if is_unlimited else per_page,
+        "total_pages": 1 if is_unlimited or total == 0 else max(1, (total + per_page - 1) // per_page),
     }
 
 
