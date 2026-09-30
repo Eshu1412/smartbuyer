@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FaCheckCircle, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaShieldAlt } from 'react-icons/fa'
 import './ThankYouView.css'
@@ -6,6 +7,14 @@ export default function ThankYouView({ leadData, onNavigateHome }) {
   const userName = leadData?.name || 'Valued Customer'
   const serviceName = leadData?.service || 'Service'
   const answers = leadData?.answers || {}
+
+  useEffect(() => {
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'Lead', {
+        content_name: serviceName
+      })
+    }
+  }, [serviceName])
 
   const answerEntries = Object.entries(answers).filter(([_, v]) => Boolean(v))
 

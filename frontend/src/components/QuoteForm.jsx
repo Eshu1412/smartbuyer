@@ -308,6 +308,14 @@ export default function QuoteForm({
       }
       setLeadResult(resultObj)
       setStep(3)
+
+      // Meta Pixel Lead tracking
+      if (typeof window.fbq === 'function') {
+        window.fbq('track', 'Lead', {
+          content_name: activeService.title,
+          content_category: activeService.category
+        })
+      }
       if (onFormSubmitted) {
         onFormSubmitted({
           name: formData.full_name,

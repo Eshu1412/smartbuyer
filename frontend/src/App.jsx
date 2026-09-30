@@ -78,6 +78,13 @@ export default function App() {
     return () => window.removeEventListener('contact_config_updated', handleConfigSync)
   }, [])
 
+  // Track Meta Pixel PageView on SPA view navigation
+  useEffect(() => {
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'PageView')
+    }
+  }, [viewState, activeVertical, activeSub])
+
   const handleSplashComplete = useCallback(() => {
     setSplashDone(true)
   }, [])
