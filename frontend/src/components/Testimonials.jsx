@@ -7,7 +7,7 @@ const testimonials = [
   {
     id: 1,
     name: 'Sarah Mitchell',
-    role: 'Homeowner, Austin TX',
+    role: 'Homeowner, Austin, TX',
     quote: 'SmartQuoteHub saved me over $1,200 on my home insurance. The comparison process was incredibly easy and I had quotes within minutes.',
     rating: 5,
     initial: 'S',
@@ -15,7 +15,7 @@ const testimonials = [
   {
     id: 2,
     name: 'James Rodriguez',
-    role: 'Small Business Owner, Miami FL',
+    role: 'Small Business Owner, Miami, FL',
     quote: "I was overwhelmed with debt and didn't know where to turn. This platform connected me with an advisor who created a realistic payoff plan.",
     rating: 5,
     initial: 'J',
@@ -23,7 +23,7 @@ const testimonials = [
   {
     id: 3,
     name: 'Linda Chen',
-    role: 'Retiree, Portland OR',
+    role: 'Retiree, Portland, OR',
     quote: 'Navigating Medicare was so confusing until I found SmartQuoteHub. They made it simple to compare plans and find the right coverage.',
     rating: 5,
     initial: 'L',
@@ -31,7 +31,7 @@ const testimonials = [
   {
     id: 4,
     name: 'Marcus Thompson',
-    role: 'New Homeowner, Denver CO',
+    role: 'New Homeowner, Denver, CO',
     quote: 'Found an amazing contractor for my kitchen renovation through this site. The whole process from quote to completion was seamless.',
     rating: 4,
     initial: 'M',

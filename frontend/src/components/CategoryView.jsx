@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { FaHome, FaChevronRight, FaArrowRight, FaHeartbeat, FaShieldAlt, FaHammer, FaHandHoldingUsd, FaGavel, FaStethoscope, FaHeart, FaFileAlt, FaCar, FaHome as FaHomeIcon, FaLayerGroup, FaTint, FaThermometerHalf, FaWindowMaximize, FaBath, FaBug, FaWater, FaWrench, FaTools, FaBroom, FaTree, FaChartLine, FaMoneyBillWave, FaCarCrash, FaUserNurse, FaPlane, FaPlaneDeparture, FaSuitcase } from 'react-icons/fa'
+import { FaHome, FaChevronRight, FaArrowRight, FaHeartbeat, FaShieldAlt, FaHammer, FaHandHoldingUsd, FaHandHoldingHeart, FaGavel, FaStethoscope, FaHeart, FaFileAlt, FaCar, FaHome as FaHomeIcon, FaLayerGroup, FaTint, FaThermometerHalf, FaWindowMaximize, FaBath, FaBug, FaWater, FaWrench, FaTools, FaBroom, FaTree, FaChartLine, FaMoneyBillWave, FaCarCrash, FaUserNurse, FaPlane, FaPlaneDeparture, FaSuitcase } from 'react-icons/fa'
 import { servicesDb } from '../data/servicesData'
 import './CategoryView.css'
 
@@ -8,10 +8,13 @@ const iconMap = {
   FaShieldAlt,
   FaHammer,
   FaHandHoldingUsd,
+  FaHandHoldingHeart,
+  FaHeartHandshake: FaHandHoldingHeart,
   FaGavel,
   FaStethoscope,
   FaHeart,
   FaFileAlt,
+  FaFileText: FaFileAlt,
   FaCar,
   FaHome: FaHomeIcon,
   FaLayerGroup,
@@ -67,7 +70,9 @@ export default function CategoryView({ verticalId, onNavigateHome, onSelectSubVe
             <div className="category-icon-box">
               <HeaderIcon />
             </div>
-            <h1 className="category-title">{vertical.title} Services</h1>
+            <h1 className="category-title">
+              {/\bservices$/i.test(vertical.title) ? vertical.title : `${vertical.title} Services`}
+            </h1>
           </div>
           <p className="category-subtitle">
             {vertical.description} Select a specific service category below to view detailed plans and check local pricing.

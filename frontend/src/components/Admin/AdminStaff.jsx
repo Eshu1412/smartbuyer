@@ -11,6 +11,7 @@ export default function AdminStaff({ onShowSnackbar }) {
   const [newRole, setNewRole] = useState('staff');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -64,21 +65,21 @@ export default function AdminStaff({ onShowSnackbar }) {
   };
 
   const handleDeleteUser = async (userId, username) => {
-    if (!window.confirm(`Are you sure you want to revoke access for ${username}?`)) return;
-
     try {
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.detail || 'Could not delete user');
+        if (onShowSnackbar) onShowSnackbar(data.detail || 'Could not delete user', 'error');
         return;
       }
+      setConfirmDeleteId(null);
       if (onShowSnackbar) onShowSnackbar(`Access revoked for ${username}`, 'info');
       fetchUsers();
     } catch (err) {
       console.error('Failed to delete user:', err);
+      if (onShowSnackbar) onShowSnackbar('Failed to revoke user access', 'error');
     }
   };
 
@@ -155,13 +156,34 @@ export default function AdminStaff({ onShowSnackbar }) {
                     </td>
                     <td>{new Date(user.created_at).toLocaleDateString()}</td>
                     <td style={{ textAlign: 'right' }}>
-                      <button
-                        className="admin-action-btn delete"
-                        title="Revoke User Access"
-                        onClick={() => handleDeleteUser(user.id, user.username)}
-                      >
-                        <FiTrash2 />
-                      </button>
+                      {confirmDeleteId === user.id ? (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <button
+                            type="button"
+                            className="admin-btn-secondary"
+                            style={{ padding: '0.3rem 0.65rem', fontSize: '0.78rem', color: '#ef4444', borderColor: '#fca5a5' }}
+                            onClick={() => handleDeleteUser(user.id, user.username)}
+                          >
+                            Confirm Revoke
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-btn-secondary"
+                            style={{ padding: '0.3rem 0.65rem', fontSize: '0.78rem' }}
+                            onClick={() => setConfirmDeleteId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="admin-action-btn delete"
+                          title="Revoke User Access"
+                          onClick={() => setConfirmDeleteId(user.id)}
+                        >
+                          <FiTrash2 />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

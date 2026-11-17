@@ -2,7 +2,7 @@ import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram, FaEnvelope, FaPhone,
 import ScrollReveal from './ScrollReveal'
 import './Footer.css'
 
-export default function Footer({ onQuoteClick }) {
+export default function Footer({ onQuoteClick, onNavigateHome, onNavigateVertical }) {
   const currentYear = new Date().getFullYear()
 
   return (
@@ -36,7 +36,7 @@ export default function Footer({ onQuoteClick }) {
             <div className="footer-brand">
               <div className="footer-logo">
                 <div className="footer-logo-icon">SQ</div>
-                Smart<span>Quote</span>Hub
+                <span className="footer-logo-text">Smart<span className="footer-logo-accent">Quote</span>Hub</span>
               </div>
               <p className="footer-tagline">
                 Connecting you with top-rated professionals nationwide. Fast, free, and completely secure.
@@ -54,11 +54,11 @@ export default function Footer({ onQuoteClick }) {
             <div className="footer-column">
               <h4 className="footer-column-title">Top Services</h4>
               <div className="footer-links">
-                <a href="#services" className="footer-link">Health Insurance</a>
-                <a href="#services" className="footer-link">Home Improvement</a>
-                <a href="#services" className="footer-link">Auto & Home</a>
-                <a href="#services" className="footer-link">Debt Relief</a>
-                <a href="#services" className="footer-link">Medicare</a>
+                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('health') : onNavigateHome?.() }}>Health Insurance</a>
+                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('home-services') : onNavigateHome?.() }}>Home Improvement</a>
+                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('insurance') : onNavigateHome?.() }}>Auto & Home</a>
+                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('finance') : onNavigateHome?.() }}>Debt Relief</a>
+                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('health') : onNavigateHome?.() }}>Medicare</a>
               </div>
             </div>
 
@@ -66,10 +66,10 @@ export default function Footer({ onQuoteClick }) {
             <div className="footer-column">
               <h4 className="footer-column-title">Legal & Privacy</h4>
               <div className="footer-links">
-                <a href="#" className="footer-link">Privacy Policy</a>
-                <a href="#" className="footer-link">Terms of Service</a>
-                <a href="#" className="footer-link">Do Not Sell My Info</a>
-                <a href="#" className="footer-link">Cookie Policy</a>
+                <a href="#footer" className="footer-link" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
+                <a href="#footer" className="footer-link" onClick={(e) => e.preventDefault()}>Terms of Service</a>
+                <a href="#footer" className="footer-link" onClick={(e) => e.preventDefault()}>Do Not Sell My Info</a>
+                <a href="#footer" className="footer-link" onClick={(e) => e.preventDefault()}>Cookie Policy</a>
               </div>
             </div>
 
@@ -96,9 +96,9 @@ export default function Footer({ onQuoteClick }) {
               © {currentYear} SmartQuoteHub. All rights reserved.
             </p>
             <div className="footer-bottom-links">
-              <a href="#" className="footer-bottom-link">Sitemap</a>
-              <a href="#" className="footer-bottom-link">Accessibility</a>
-              <a href="#" className="footer-bottom-link">Disclaimer</a>
+              <a href="#footer" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>Sitemap</a>
+              <a href="#footer" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>Accessibility</a>
+              <a href="#footer" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>Disclaimer</a>
             </div>
           </div>
         </div>

@@ -67,7 +67,7 @@ export const DEFAULT_CONTACT_CONFIG = {
   enabled: true,
   phone_number: '+18558312264',
   modal_title: 'Speak With an Advisor Right Now',
-  modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.',
+  modal_message: 'Your request has been received! Our support specialists are available immediately to provide personal assistance and the lowest quote rates.',
   auto_redirect: true,
   auto_redirect_seconds: 5,
   services: {

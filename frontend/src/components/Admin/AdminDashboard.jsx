@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiPieChart, FiUsers, FiShield, FiLogOut, FiRefreshCw, 
   FiHome, FiGrid, FiSun, FiMoon, FiSettings, 
-  FiChevronLeft, FiChevronRight, FiMaximize2, FiBell 
+  FiChevronLeft, FiChevronRight, FiMaximize2, FiMenu, FiX 
 } from 'react-icons/fi';
 
 import AdminLogin from './AdminLogin';
@@ -21,6 +21,7 @@ export default function AdminDashboard({ onNavigateHome }) {
   const [stats, setStats] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [serviceFilterTarget, setServiceFilterTarget] = useState('all');
 
   // Theme state
@@ -123,8 +124,13 @@ export default function AdminDashboard({ onNavigateHome }) {
       {/* Material Toast / Snackbar Component */}
       <AdminSnackbar snackbars={snackbars} onClose={removeSnackbar} />
 
+      {/* Mobile Sidebar Backdrop */}
+      {mobileSidebarOpen && (
+        <div className="admin-mobile-backdrop" onClick={() => setMobileSidebarOpen(false)} />
+      )}
+
       {/* Collapsible Sidebar */}
-      <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+      <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileSidebarOpen ? 'open' : ''}`}>
         <div className="admin-sidebar-header">
           <div className="admin-brand-group">
             <div className="admin-logo-sq">SQ</div>
@@ -152,7 +158,7 @@ export default function AdminDashboard({ onNavigateHome }) {
 
           <button
             className={`admin-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
+            onClick={() => { setActiveTab('overview'); setMobileSidebarOpen(false); }}
             title="Dashboard Overview"
           >
             <FiPieChart className="admin-nav-icon" />
@@ -161,7 +167,7 @@ export default function AdminDashboard({ onNavigateHome }) {
 
           <button
             className={`admin-nav-item ${activeTab === 'leads' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('leads'); setServiceFilterTarget('all'); }}
+            onClick={() => { setActiveTab('leads'); setServiceFilterTarget('all'); setMobileSidebarOpen(false); }}
             title="Leads Database"
           >
             <FiGrid className="admin-nav-icon" />
@@ -175,7 +181,7 @@ export default function AdminDashboard({ onNavigateHome }) {
 
           <button
             className={`admin-nav-item ${activeTab === 'staff' ? 'active' : ''}`}
-            onClick={() => setActiveTab('staff')}
+            onClick={() => { setActiveTab('staff'); setMobileSidebarOpen(false); }}
             title="Team & Access Control"
           >
             <FiUsers className="admin-nav-icon" />
@@ -184,7 +190,7 @@ export default function AdminDashboard({ onNavigateHome }) {
 
           <button
             className={`admin-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('settings')}
+            onClick={() => { setActiveTab('settings'); setMobileSidebarOpen(false); }}
             title="System Diagnostics & Settings"
           >
             <FiSettings className="admin-nav-icon" />
@@ -224,7 +230,15 @@ export default function AdminDashboard({ onNavigateHome }) {
       <main className="admin-main">
         {/* Sticky Header */}
         <header className="admin-header">
-          <div className="admin-header-title-group">
+          <div className="admin-header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              type="button"
+              className="admin-icon-btn admin-mobile-menu-btn"
+              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              aria-label="Toggle admin navigation"
+            >
+              {mobileSidebarOpen ? <FiX /> : <FiMenu />}
+            </button>
             <h1>
               {activeTab === 'overview' && 'Analytics & Operations Hub'}
               {activeTab === 'leads' && 'Consumer Quote Directory & Kanban'}

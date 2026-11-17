@@ -72,13 +72,19 @@ export default function AdminOverview({ stats, onNavigateToLeads, onFilterByServ
   const chartHeight = 120;
   
   const points = trendData.map((d, idx) => {
-    const x = (idx / (trendData.length - 1)) * (chartWidth - 40) + 20;
+    const x = trendData.length > 1
+      ? (idx / (trendData.length - 1)) * (chartWidth - 40) + 20
+      : chartWidth / 2;
     const y = chartHeight - (d.count / maxTrend) * (chartHeight - 30) - 15;
-    return { x, y, count: d.count, day: d.day };
+    return { x, y, count: d.count, day: d.day || '' };
   });
 
-  const pathD = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`, '');
-  const areaD = `${pathD} L ${points[points.length - 1].x} ${chartHeight} L ${points[0].x} ${chartHeight} Z`;
+  const pathD = points.length === 1
+    ? `M 20 ${points[0].y} L ${chartWidth - 20} ${points[0].y}`
+    : points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`, '');
+  const areaD = points.length === 1
+    ? `M 20 ${points[0].y} L ${chartWidth - 20} ${points[0].y} L ${chartWidth - 20} ${chartHeight} L 20 ${chartHeight} Z`
+    : `${pathD} L ${points[points.length - 1].x} ${chartHeight} L ${points[0].x} ${chartHeight} Z`;
 
   return (
     <motion.div
@@ -390,7 +396,7 @@ export default function AdminOverview({ stats, onNavigateToLeads, onFilterByServ
               <tr>
                 <th>Customer</th>
                 <th>Service</th>
-                <th>Zip Code</th>
+                <th>ZIP Code</th>
                 <th>Status</th>
                 <th>Submitted</th>
               </tr>

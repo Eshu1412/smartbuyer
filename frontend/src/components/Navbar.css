@@ -68,7 +68,11 @@
   box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
 }
 
-.navbar-logo span {
+.navbar-logo-text {
+  color: inherit;
+}
+
+.navbar-logo-accent {
   color: var(--primary); /* Vibrant Blue #2563EB */
 }
 
@@ -89,6 +93,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .navbar-link::after {
@@ -158,7 +163,7 @@
   z-index: 2005;
 }
 
-.navbar.mobile-open .navbar-logo span {
+.navbar.mobile-open .navbar-logo-accent {
   color: #60A5FA !important;
 }
 
@@ -175,7 +180,7 @@
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 960px) {
   .navbar-links {
     display: none;
   }

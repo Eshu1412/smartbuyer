@@ -197,7 +197,7 @@ export default function App() {
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             >
               <Hero onQuoteClick={() => handleOpenQuote('')} />
-              <Services onSelectSubVertical={handleNavigateSubVertical} />
+              <Services onNavigateVertical={handleNavigateVertical} />
               <HowItWorks />
               <Testimonials />
               <FAQ onQuoteClick={() => handleOpenQuote('')} />
@@ -264,6 +264,8 @@ export default function App() {
 
       <Footer
         onQuoteClick={() => handleOpenQuote('')}
+        onNavigateHome={handleNavigateHome}
+        onNavigateVertical={handleNavigateVertical}
       />
       <QuoteForm
         isOpen={quoteOpen}

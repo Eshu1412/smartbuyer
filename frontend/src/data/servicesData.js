@@ -14,7 +14,7 @@ export const servicesDb = {
             name: "Bronze / Silver Plans",
             price: "Affordable Premiums",
             detail: "Low monthly cost options covering essential health benefits with varying deductibles.",
-            features: ["Government subsidies available", "Preventative care included", "Covers pre-existing conditions"]
+            features: ["Government subsidies available", "Preventive care included", "Covers pre-existing conditions"]
           },
           {
             name: "Gold / Platinum Plans",
@@ -55,7 +55,7 @@ export const servicesDb = {
       "final-expense": {
         title: "Final Expense Insurance",
         desc: "Protect your loved ones from the burden of funeral and end-of-life costs.",
-        icon: "FaHeartHandshake",
+        icon: "FaHandHoldingHeart",
         plans: [
           {
             name: "Guaranteed Acceptance",
@@ -78,7 +78,7 @@ export const servicesDb = {
       "ssdi": {
         title: "SSDI (Disability)",
         desc: "Get help filing or appealing Social Security Disability Insurance claims.",
-        icon: "FaFileText",
+        icon: "FaFileAlt",
         plans: [
           {
             name: "Disability Claim Assistance",
@@ -290,7 +290,7 @@ export const servicesDb = {
             features: ["Targeted specific pest treatment", "Interior & exterior application", "30-day guarantee"]
           },
           {
-            name: "Quarterly Preventative",
+            name: "Quarterly Preventive",
             price: "$49/month",
             detail: "Year-round peace of mind with proactive seasonal treatments.",
             features: ["4 visits per year", "General pest barrier", "Free re-service"]

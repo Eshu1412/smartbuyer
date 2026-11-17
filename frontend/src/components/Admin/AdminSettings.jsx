@@ -250,7 +250,7 @@ export default function AdminSettings({ onShowSnackbar }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+      <div className="admin-settings-grid">
         {/* Left Column: Server Status & Telemetry */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="admin-panel">
@@ -271,7 +271,7 @@ export default function AdminSettings({ onShowSnackbar }) {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div className="admin-telemetry-grid">
               <div className="admin-detail-item">
                 <div className="admin-detail-label">API Gateway Status</div>
                 <div className="admin-detail-value" style={{ color: health.status === 'healthy' ? '#10b981' : '#ef4444', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

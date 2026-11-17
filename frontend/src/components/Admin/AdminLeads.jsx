@@ -132,10 +132,15 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
     }
   };
 
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
   // Bulk Delete
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!window.confirm(`Delete ${selectedIds.length} selected leads permanently?`)) return;
+    if (!confirmBulkDelete) {
+      setConfirmBulkDelete(true);
+      return;
+    }
     try {
       const res = await fetch('/api/leads/bulk-delete', {
         method: 'POST',
@@ -146,6 +151,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
       if (res.ok) {
         if (onShowSnackbar) onShowSnackbar(`Deleted ${data.deleted_count} leads`, 'info');
         setSelectedIds([]);
+        setConfirmBulkDelete(false);
         fetchLeads();
         if (onUpdateRefresh) onUpdateRefresh();
       }
@@ -311,7 +317,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
       'Last Name',
       'Email',
       'Phone',
-      'Zip Code',
+      'ZIP Code',
       'Service Type',
       'Current Provider',
       'Income Range',
@@ -566,9 +572,9 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                 <FiDownload /> Export Selected
               </button>
               <button className="admin-bulk-btn delete" onClick={handleBulkDelete}>
-                <FiTrash2 /> Delete
+                <FiTrash2 /> {confirmBulkDelete ? 'Confirm Delete' : 'Delete'}
               </button>
-              <button className="admin-bulk-btn" style={{ background: 'transparent' }} onClick={() => setSelectedIds([])}>
+              <button className="admin-bulk-btn" style={{ background: 'transparent' }} onClick={() => { setSelectedIds([]); setConfirmBulkDelete(false); }}>
                 <FiX />
               </button>
             </div>
@@ -1044,7 +1050,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                       </select>
                     </div>
                     <div className="admin-form-group">
-                      <label className="admin-form-label">Zip Code</label>
+                      <label className="admin-form-label">ZIP Code</label>
                       <input
                         type="text"
                         className="admin-input"
@@ -1184,7 +1190,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                       </div>
                     </div>
                     <div className="admin-detail-item">
-                      <div className="admin-detail-label">Zip Code</div>
+                      <div className="admin-detail-label">ZIP Code</div>
                       <div className="admin-detail-value">{selectedLead.zip_code}</div>
                     </div>
                     <div className="admin-detail-item">
@@ -1357,7 +1363,7 @@ export default function AdminLeads({ onUpdateRefresh, onShowSnackbar, initialSer
                     </select>
                   </div>
                   <div className="admin-form-group">
-                    <label className="admin-form-label">Zip Code *</label>
+                    <label className="admin-form-label">ZIP Code *</label>
                     <input
                       type="text"
                       className="admin-input"

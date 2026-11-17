@@ -81,6 +81,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.65rem;
+  padding-right: 3rem;
 }
 
 .quote-brand-badge {
@@ -756,8 +757,8 @@
     height: 32px;
   }
 
-  .quote-header h2 {
-    font-size: 1.65rem;
+  .quote-step-intro h2 {
+    font-size: 1.45rem;
   }
 
   .form-row {

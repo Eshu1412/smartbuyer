@@ -58,7 +58,7 @@ export default function Navbar({
       <div className="navbar-inner">
         <a className="navbar-logo" href="#" onClick={(e) => { e.preventDefault(); handleLinkClick(onNavigateHome) }}>
           <div className="navbar-logo-icon">SQ</div>
-          Smart<span>Quote</span>Hub
+          <span className="navbar-logo-text">Smart<span className="navbar-logo-accent">Quote</span>Hub</span>
         </a>
 
         <div className="navbar-links">

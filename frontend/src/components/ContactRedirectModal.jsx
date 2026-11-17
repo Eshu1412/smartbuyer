@@ -27,7 +27,7 @@ export default function ContactRedirectModal({
   const phone = (resolvedPhone || '').trim()
   const cleanPhone = phone.replace(/[^0-9+]/g, '')
   const title = config?.modal_title || 'Speak With an Advisor Right Now'
-  const message = config?.modal_message || 'Your request has been received! Our support specialists are available immediately to provide personal assistance and lowest quote rates.'
+  const message = config?.modal_message || 'Your request has been received! Our support specialists are available immediately to provide personal assistance and the lowest quote rates.'
   const autoRedirect = Boolean(config?.auto_redirect)
   const initialSeconds = Number(config?.auto_redirect_seconds) || 5
 

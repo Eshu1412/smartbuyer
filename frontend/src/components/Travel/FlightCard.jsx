@@ -55,7 +55,7 @@ export default function FlightCard({ onFormSubmitted }) {
       return
     }
     if (!zipCode.trim()) {
-      setErrorMsg('Please enter your zip code.')
+      setErrorMsg('Please enter your ZIP code.')
       return
     }
     if (!tcpaConsent) {
@@ -66,7 +66,7 @@ export default function FlightCard({ onFormSubmitted }) {
     setSubmitting(true)
 
     // Capture ActiveProspect TrustedForm certificate URL from generated hidden field
-    const tfCertUrl = document.getElementById('xxTrustedFormCertUrl')?.value || 
+    const tfCertUrl = e.target?.elements?.xxTrustedFormCertUrl?.value || 
                       document.querySelector('input[name="xxTrustedFormCertUrl"]')?.value || 
                       ''
 
@@ -202,7 +202,7 @@ export default function FlightCard({ onFormSubmitted }) {
         {/* Flight Booking Form */}
         <form onSubmit={handleSubmit} className="flight-form-grid">
           {/* ActiveProspect TrustedForm Certificate Hidden Input Field */}
-          <input type="hidden" id="xxTrustedFormCertUrl" name="xxTrustedFormCertUrl" />
+          <input type="hidden" id="xxTrustedFormCertUrlFlight" name="xxTrustedFormCertUrl" />
 
           {/* Passenger Contact & Address Details */}
           <div className="flight-form-section">
@@ -295,11 +295,11 @@ export default function FlightCard({ onFormSubmitted }) {
                 </div>
               </div>
 
-              {/* Zip Code */}
+              {/* ZIP Code */}
               <div className="form-field">
                 <label className="field-label" htmlFor="flight-zip-code">
                   <FaMailBulk className="field-label-icon" />
-                  Zip Code <span className="required-dot">*</span>
+                  ZIP Code <span className="required-dot">*</span>
                 </label>
                 <div className="input-with-icon">
                   <FaMailBulk className="input-icon" />
@@ -422,7 +422,7 @@ export default function FlightCard({ onFormSubmitted }) {
                     <div className="ticket-field-val">{confirmedBooking.address}</div>
                   </div>
                   <div className="ticket-field ticket-field-full">
-                    <div className="ticket-field-label">State / Zip</div>
+                    <div className="ticket-field-label">State / ZIP</div>
                     <div className="ticket-field-val">{confirmedBooking.state} - {confirmedBooking.zip_code}</div>
                   </div>
                   {confirmedBooking.trusted_form_cert_url && (

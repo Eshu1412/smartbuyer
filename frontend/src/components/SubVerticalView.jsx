@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { FaHome, FaChevronRight, FaCheckCircle, FaLock, FaShieldAlt, FaHeartbeat, FaHammer, FaHandHoldingUsd, FaGavel, FaStethoscope, FaHeart, FaFileAlt, FaCar, FaHome as FaHomeIcon, FaLayerGroup, FaTint, FaThermometerHalf, FaWindowMaximize, FaBath, FaBug, FaWater, FaWrench, FaTools, FaBroom, FaTree, FaChartLine, FaMoneyBillWave, FaCarCrash, FaUserNurse } from 'react-icons/fa'
+import { FaHome, FaChevronRight, FaCheckCircle, FaLock, FaShieldAlt, FaHeartbeat, FaHammer, FaHandHoldingUsd, FaHandHoldingHeart, FaGavel, FaStethoscope, FaHeart, FaFileAlt, FaCar, FaHome as FaHomeIcon, FaLayerGroup, FaTint, FaThermometerHalf, FaWindowMaximize, FaBath, FaBug, FaWater, FaWrench, FaTools, FaBroom, FaTree, FaChartLine, FaMoneyBillWave, FaCarCrash, FaUserNurse, FaPlane, FaPlaneDeparture, FaSuitcase } from 'react-icons/fa'
 import { servicesDb } from '../data/servicesData'
 import './SubVerticalView.css'
 
@@ -9,10 +9,13 @@ const iconMap = {
   FaShieldAlt,
   FaHammer,
   FaHandHoldingUsd,
+  FaHandHoldingHeart,
+  FaHeartHandshake: FaHandHoldingHeart,
   FaGavel,
   FaStethoscope,
   FaHeart,
   FaFileAlt,
+  FaFileText: FaFileAlt,
   FaCar,
   FaHome: FaHomeIcon,
   FaLayerGroup,
@@ -30,6 +33,9 @@ const iconMap = {
   FaMoneyBillWave,
   FaCarCrash,
   FaUserNurse,
+  FaPlane,
+  FaPlaneDeparture,
+  FaSuitcase,
   FaActivity: FaHeartbeat
 }
 
@@ -72,7 +78,7 @@ export default function SubVerticalView({ verticalId, subId, onNavigateHome, onN
     e.preventDefault()
     setSubmitting(true)
 
-    const tfCertUrl = document.getElementById('xxTrustedFormCertUrl')?.value || document.querySelector('input[name="xxTrustedFormCertUrl"]')?.value || ''
+    const tfCertUrl = e.target?.elements?.xxTrustedFormCertUrl?.value || document.querySelector('input[name="xxTrustedFormCertUrl"]')?.value || ''
     const payload = {
       vertical_id: verticalId,
       sub_id: subId,
@@ -175,7 +181,7 @@ export default function SubVerticalView({ verticalId, subId, onNavigateHome, onN
 
           <form className="qualification-form" onSubmit={handleSubmit}>
             {/* TrustedForm Certificate Hidden Field */}
-            <input type="hidden" id="xxTrustedFormCertUrl" name="xxTrustedFormCertUrl" />
+            <input type="hidden" id="xxTrustedFormCertUrlSub" name="xxTrustedFormCertUrl" />
             {/* Step 1: Your Needs */}
             <div className="form-section">
               <h3 className="form-section-title">
@@ -262,7 +268,7 @@ export default function SubVerticalView({ verticalId, subId, onNavigateHome, onN
               </div>
 
               <div className="form-group zip-group">
-                <label className="form-label">Zip Code</label>
+                <label className="form-label">ZIP Code</label>
                 <input
                   type="text"
                   name="zip_code"

@@ -209,6 +209,7 @@ export default function QuoteForm({
         )
         if (found) {
           setSelectedServiceId(found.id)
+          setAnswers({})
         }
       }
       setErrorMsg('')
@@ -268,9 +269,16 @@ export default function QuoteForm({
     setSubmitting(true)
 
     // Capture ActiveProspect TrustedForm certificate URL from generated hidden field
-    const tfCertUrl = document.getElementById('xxTrustedFormCertUrl')?.value || 
+    const tfCertUrl = e.target?.elements?.xxTrustedFormCertUrl?.value ||
                       document.querySelector('input[name="xxTrustedFormCertUrl"]')?.value || 
                       ''
+
+    const resolvedAnswers = {}
+    if (activeService.questions) {
+      activeService.questions.forEach(q => {
+        resolvedAnswers[q.id] = answers[q.id] || q.options[0]
+      })
+    }
 
     const payload = {
       full_name: formData.full_name.trim(),
@@ -281,7 +289,7 @@ export default function QuoteForm({
       zip_code: formData.zip_code.trim(),
       trusted_form_cert_url: tfCertUrl,
       answers: {
-        ...answers,
+        ...resolvedAnswers,
         preferred_contact_time: formData.preferred_time
       },
       notes: `Preferred contact: ${formData.preferred_time} | Quoted via Smart Quote Engine`
@@ -293,6 +301,7 @@ export default function QuoteForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
+      const data = res.ok ? await res.json() : {}
 
       const resultObj = {
         refId: data.lead_id ? `REQ-${data.lead_id}` : `REQ-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -309,8 +318,8 @@ export default function QuoteForm({
       setLeadResult(resultObj)
       setStep(3)
 
-      // Meta Pixel Lead tracking
-      if (typeof window.fbq === 'function') {
+      // Meta Pixel Lead tracking (ThankYouView tracks Lead when onFormSubmitted navigates there)
+      if (!onFormSubmitted && typeof window.fbq === 'function') {
         window.fbq('track', 'Lead', {
           content_name: activeService.title,
           content_category: activeService.category
@@ -324,7 +333,7 @@ export default function QuoteForm({
           zip_code: formData.zip_code,
           service: activeService.title,
           category: activeService.category,
-          answers: { ...answers, preferred_contact_time: formData.preferred_time }
+          answers: { ...resolvedAnswers, preferred_contact_time: formData.preferred_time }
         })
       }
     } catch {
@@ -351,7 +360,7 @@ export default function QuoteForm({
           zip_code: formData.zip_code,
           service: activeService.title,
           category: activeService.category,
-          answers: { ...answers, preferred_contact_time: formData.preferred_time }
+          answers: { ...resolvedAnswers, preferred_contact_time: formData.preferred_time }
         })
       }
     } finally {
@@ -455,7 +464,10 @@ export default function QuoteForm({
                         key={srv.id}
                         type="button"
                         className={`quote-service-card ${isSelected ? 'active' : ''}`}
-                        onClick={() => setSelectedServiceId(srv.id)}
+                        onClick={() => {
+                          setSelectedServiceId(srv.id)
+                          setAnswers({})
+                        }}
                       >
                         <div 
                           className="quote-service-icon-wrap" 
@@ -549,7 +561,7 @@ export default function QuoteForm({
 
                 <form className="quote-form" onSubmit={handleSubmit}>
                   {/* ActiveProspect TrustedForm Certificate Hidden Input Field */}
-                  <input type="hidden" id="xxTrustedFormCertUrl" name="xxTrustedFormCertUrl" />
+                  <input type="hidden" id="xxTrustedFormCertUrlQuote" name="xxTrustedFormCertUrl" />
 
                   {/* Full Name */}
                   <div className="form-group">
