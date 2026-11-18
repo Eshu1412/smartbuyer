@@ -2,8 +2,20 @@ import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram, FaEnvelope, FaPhone,
 import ScrollReveal from './ScrollReveal'
 import './Footer.css'
 
-export default function Footer({ onQuoteClick, onNavigateHome, onNavigateVertical }) {
+export default function Footer({ 
+  onQuoteClick,
+  onNavigateVertical,
+  onNavigateSubVertical,
+  onNavigateLegal,
+  onNavigateSiteMap
+}) {
   const currentYear = new Date().getFullYear()
+
+  const handleLink = (e, callback) => {
+    e.preventDefault()
+    if (callback) callback()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
     <>
@@ -36,17 +48,17 @@ export default function Footer({ onQuoteClick, onNavigateHome, onNavigateVertica
             <div className="footer-brand">
               <div className="footer-logo">
                 <div className="footer-logo-icon">SQ</div>
-                <span className="footer-logo-text">Smart<span className="footer-logo-accent">Quote</span>Hub</span>
+                Smart<span>Quote</span>Hub
               </div>
               <p className="footer-tagline">
                 Connecting you with top-rated professionals nationwide. Fast, free, and completely secure.
                 Your one-stop platform for comparing plans and getting the best quotes.
               </p>
               <div className="footer-socials">
-                <a href="#" className="footer-social-link" aria-label="Facebook"><FaFacebookF /></a>
-                <a href="#" className="footer-social-link" aria-label="Twitter"><FaTwitter /></a>
-                <a href="#" className="footer-social-link" aria-label="LinkedIn"><FaLinkedinIn /></a>
-                <a href="#" className="footer-social-link" aria-label="Instagram"><FaInstagram /></a>
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Facebook"><FaFacebookF /></a>
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Twitter"><FaTwitter /></a>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="LinkedIn"><FaLinkedinIn /></a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Instagram"><FaInstagram /></a>
               </div>
             </div>
 
@@ -54,22 +66,84 @@ export default function Footer({ onQuoteClick, onNavigateHome, onNavigateVertica
             <div className="footer-column">
               <h4 className="footer-column-title">Top Services</h4>
               <div className="footer-links">
-                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('health') : onNavigateHome?.() }}>Health Insurance</a>
-                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('home-services') : onNavigateHome?.() }}>Home Improvement</a>
-                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('insurance') : onNavigateHome?.() }}>Auto & Home</a>
-                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('finance') : onNavigateHome?.() }}>Debt Relief</a>
-                <a href="#services" className="footer-link" onClick={(e) => { e.preventDefault(); onNavigateVertical ? onNavigateVertical('health') : onNavigateHome?.() }}>Medicare</a>
+                <a
+                  href="/services/health/health-aca"
+                  className="footer-link"
+                  onClick={(e) => handleLink(e, () => onNavigateSubVertical && onNavigateSubVertical('health', 'health-aca'))}
+                >
+                  Health Insurance (ACA)
+                </a>
+                <a
+                  href="/services/health/medicare"
+                  className="footer-link"
+                  onClick={(e) => handleLink(e, () => onNavigateSubVertical && onNavigateSubVertical('health', 'medicare'))}
+                >
+                  Medicare Advantage
+                </a>
+                <a
+                  href="/services/insurance/auto"
+                  className="footer-link"
+                  onClick={(e) => handleLink(e, () => onNavigateSubVertical && onNavigateSubVertical('insurance', 'auto'))}
+                >
+                  Auto Insurance
+                </a>
+                <a
+                  href="/services/home-services/roofing"
+                  className="footer-link"
+                  onClick={(e) => handleLink(e, () => onNavigateSubVertical && onNavigateSubVertical('home-services', 'roofing'))}
+                >
+                  Roofing Contractors
+                </a>
+                <a
+                  href="/services/finance/debt-relief"
+                  className="footer-link"
+                  onClick={(e) => handleLink(e, () => onNavigateSubVertical && onNavigateSubVertical('finance', 'debt-relief'))}
+                >
+                  Debt Relief Programs
+                </a>
+                <a
+                  href="/services/travel"
+                  className="footer-link"
+                  onClick={(e) => handleLink(e, () => onNavigateVertical && onNavigateVertical('travel'))}
+                >
+                  Flight Booking
+                </a>
               </div>
             </div>
 
             {/* Legal & Privacy */}
             <div className="footer-column">
-              <h4 className="footer-column-title">Legal & Privacy</h4>
+              <h4 className="footer-column-title">Legal &amp; Privacy</h4>
               <div className="footer-links">
-                <a href="#footer" className="footer-link" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
-                <a href="#footer" className="footer-link" onClick={(e) => e.preventDefault()}>Terms of Service</a>
-                <a href="#footer" className="footer-link" onClick={(e) => e.preventDefault()}>Do Not Sell My Info</a>
-                <a href="#footer" className="footer-link" onClick={(e) => e.preventDefault()}>Cookie Policy</a>
+                <a
+                  href="/privacy-policy"
+                  className="footer-link"
+                  onClick={(e) => handleLink(e, () => onNavigateLegal && onNavigateLegal('privacy'))}
+                >
+                  Privacy Policy
+                </a>
+                <a
+                  href="/terms-of-service"
+                  className="footer-link"
+                  onClick={(e) => handleLink(e, () => onNavigateLegal && onNavigateLegal('terms'))}
+                >
+                  Terms of Service
+                </a>
+                <a
+                  href="/sitemap"
+                  className="footer-link"
+                  onClick={(e) => handleLink(e, () => onNavigateSiteMap && onNavigateSiteMap())}
+                >
+                  HTML Directory Sitemap
+                </a>
+                <a
+                  href="/sitemap.xml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-link"
+                >
+                  XML Sitemap
+                </a>
               </div>
             </div>
 
@@ -96,9 +170,27 @@ export default function Footer({ onQuoteClick, onNavigateHome, onNavigateVertica
               © {currentYear} SmartQuoteHub. All rights reserved.
             </p>
             <div className="footer-bottom-links">
-              <a href="#footer" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>Sitemap</a>
-              <a href="#footer" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>Accessibility</a>
-              <a href="#footer" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>Disclaimer</a>
+              <a
+                href="/sitemap"
+                className="footer-bottom-link"
+                onClick={(e) => handleLink(e, () => onNavigateSiteMap && onNavigateSiteMap())}
+              >
+                Sitemap
+              </a>
+              <a
+                href="/privacy-policy"
+                className="footer-bottom-link"
+                onClick={(e) => handleLink(e, () => onNavigateLegal && onNavigateLegal('privacy'))}
+              >
+                Privacy
+              </a>
+              <a
+                href="/terms-of-service"
+                className="footer-bottom-link"
+                onClick={(e) => handleLink(e, () => onNavigateLegal && onNavigateLegal('terms'))}
+              >
+                Terms
+              </a>
             </div>
           </div>
         </div>

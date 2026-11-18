@@ -28,13 +28,13 @@ export default function Navbar({
   }, [mobileOpen])
 
   const categories = [
-    { label: 'Home', id: 'home', action: () => onNavigateHome() },
-    { label: 'Health & Life', id: 'health', action: () => onNavigateVertical('health') },
-    { label: 'Auto & Home', id: 'insurance', action: () => onNavigateVertical('insurance') },
-    { label: 'Home Services', id: 'home-services', action: () => onNavigateVertical('home-services') },
-    { label: 'Finance', id: 'finance', action: () => onNavigateVertical('finance') },
-    { label: 'Legal Help', id: 'legal', action: () => onNavigateVertical('legal') },
-    { label: 'Flight Booking', id: 'travel', action: () => onNavigateVertical('travel') },
+    { label: 'Home', id: 'home', path: '/', action: () => onNavigateHome() },
+    { label: 'Health & Life', id: 'health', path: '/services/health', action: () => onNavigateVertical('health') },
+    { label: 'Auto & Home', id: 'insurance', path: '/services/insurance', action: () => onNavigateVertical('insurance') },
+    { label: 'Home Services', id: 'home-services', path: '/services/home-services', action: () => onNavigateVertical('home-services') },
+    { label: 'Finance', id: 'finance', path: '/services/finance', action: () => onNavigateVertical('finance') },
+    { label: 'Legal Help', id: 'legal', path: '/services/legal', action: () => onNavigateVertical('legal') },
+    { label: 'Flight Booking', id: 'travel', path: '/services/travel', action: () => onNavigateVertical('travel') },
   ]
 
   const isCategoryActive = (catId) => {
@@ -45,7 +45,6 @@ export default function Navbar({
   const handleLinkClick = (action) => {
     setMobileOpen(false)
     if (action) action()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -56,20 +55,31 @@ export default function Navbar({
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="navbar-inner">
-        <a className="navbar-logo" href="#" onClick={(e) => { e.preventDefault(); handleLinkClick(onNavigateHome) }}>
+        <a
+          className="navbar-logo"
+          href="/"
+          onClick={(e) => {
+            e.preventDefault()
+            handleLinkClick(onNavigateHome)
+          }}
+        >
           <div className="navbar-logo-icon">SQ</div>
-          <span className="navbar-logo-text">Smart<span className="navbar-logo-accent">Quote</span>Hub</span>
+          Smart<span>Quote</span>Hub
         </a>
 
         <div className="navbar-links">
           {categories.map((cat) => (
-            <button
+            <a
               key={cat.id}
+              href={cat.path}
               className={`navbar-link ${isCategoryActive(cat.id) ? 'active' : ''}`}
-              onClick={() => handleLinkClick(cat.action)}
+              onClick={(e) => {
+                e.preventDefault()
+                handleLinkClick(cat.action)
+              }}
             >
               {cat.label}
-            </button>
+            </a>
           ))}
         </div>
 
@@ -83,7 +93,7 @@ export default function Navbar({
         <button
           className={`navbar-toggle ${mobileOpen ? 'active' : ''}`}
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
+          aria-label="Toggle navigation menu"
         >
           <span></span>
           <span></span>
@@ -92,16 +102,26 @@ export default function Navbar({
 
         <div className={`mobile-menu ${mobileOpen ? 'open' : ''}`}>
           {categories.map((cat) => (
-            <button
+            <a
               key={cat.id}
+              href={cat.path}
               className={`navbar-link ${isCategoryActive(cat.id) ? 'active' : ''}`}
-              onClick={() => handleLinkClick(cat.action)}
+              onClick={(e) => {
+                e.preventDefault()
+                handleLinkClick(cat.action)
+              }}
             >
               {cat.label}
-            </button>
+            </a>
           ))}
 
-          <button className="btn btn-primary" onClick={() => { setMobileOpen(false); onQuoteClick() }}>
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setMobileOpen(false)
+              onQuoteClick()
+            }}
+          >
             Get Free Quote
           </button>
         </div>
@@ -109,4 +129,3 @@ export default function Navbar({
     </motion.nav>
   )
 }
-

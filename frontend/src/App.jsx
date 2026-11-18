@@ -15,14 +15,19 @@ import ThankYouView from './components/ThankYouView'
 import AdminDashboard from './components/Admin/AdminDashboard'
 import TravelServicesView from './components/Travel/TravelServicesView'
 import ContactRedirectModal from './components/ContactRedirectModal'
+import PrivacyPolicy from './components/Legal/PrivacyPolicy'
+import TermsOfService from './components/Legal/TermsOfService'
+import SiteMap from './components/SiteMap'
 import { DEFAULT_CONTACT_CONFIG, getServicePhone } from './utils/serviceContact'
+import { updatePageSEO } from './utils/seo'
+import { servicesDb } from './data/servicesData'
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false)
   const [quoteOpen, setQuoteOpen] = useState(false)
   const [selectedService, setSelectedService] = useState('')
 
-  // View state: 'home' | 'vertical' | 'sub-vertical' | 'thank-you' | 'admin'
+  // View state: 'home' | 'vertical' | 'sub-vertical' | 'thank-you' | 'admin' | 'privacy' | 'terms' | 'sitemap'
   const [viewState, setViewState] = useState('home')
   const [activeVertical, setActiveVertical] = useState('')
   const [activeSub, setActiveSub] = useState('')
@@ -40,17 +45,90 @@ export default function App() {
     }
   })
 
-  // Listen to #admin hash or location changes
-  useEffect(() => {
-    const checkHash = () => {
-      if (window.location.hash === '#admin' || window.location.pathname === '/admin') {
-        setViewState('admin')
+  // URL Parser for Deep-Linking and History
+  const parseCurrentLocation = useCallback(() => {
+    const path = window.location.pathname.replace(/\/+$/, '') || '/'
+    const hash = window.location.hash
+
+    if (hash === '#admin' || path === '/admin') {
+      setViewState('admin')
+      return
+    }
+
+    if (path === '/privacy-policy') {
+      setViewState('privacy')
+      updatePageSEO({
+        title: 'Privacy Policy | SmartQuoteHub',
+        description: 'Read the SmartQuoteHub Privacy Policy. Learn how we safeguard your personal information, handle quote requests, and ensure TCPA compliance.',
+        path: '/privacy-policy'
+      })
+      return
+    }
+
+    if (path === '/terms-of-service') {
+      setViewState('terms')
+      updatePageSEO({
+        title: 'Terms of Service | SmartQuoteHub',
+        description: 'Read the SmartQuoteHub Terms of Service. Understand our rate comparison platform terms, TCPA consent, and usage policies.',
+        path: '/terms-of-service'
+      })
+      return
+    }
+
+    if (path === '/sitemap') {
+      setViewState('sitemap')
+      updatePageSEO({
+        title: 'Website Directory & HTML Sitemap | SmartQuoteHub',
+        description: 'Complete directory of all free quote comparison services, insurance options, home improvement trades, and flight booking.',
+        path: '/sitemap'
+      })
+      return
+    }
+
+    if (path === '/thank-you') {
+      setViewState('thank-you')
+      return
+    }
+
+    // Match /services/:vertical/:sub or /services/:vertical
+    const parts = path.split('/').filter(Boolean)
+    if (parts[0] === 'services' && parts[1]) {
+      const verticalKey = parts[1]
+      if (servicesDb[verticalKey]) {
+        setActiveVertical(verticalKey)
+        if (parts[2] && servicesDb[verticalKey].subs?.[parts[2]]) {
+          setActiveSub(parts[2])
+          setViewState('sub-vertical')
+          return
+        }
+        setActiveSub('')
+        setViewState('vertical')
+        return
       }
     }
-    checkHash()
-    window.addEventListener('hashchange', checkHash)
-    return () => window.removeEventListener('hashchange', checkHash)
+
+    // Default to Home
+    setViewState('home')
+    setActiveVertical('')
+    setActiveSub('')
+    updatePageSEO({
+      title: 'SmartQuoteHub — Compare Plans & Get Free Quotes Nationwide',
+      description: 'Compare free quotes from top-rated providers nationwide. Find affordable ACA health insurance, Medicare, auto & home insurance, home improvement, debt relief, and flight booking in 60 seconds.',
+      keywords: ['compare quotes', 'health insurance quotes', 'medicare advantage plans', 'auto insurance comparison', 'home insurance quotes', 'roofing contractors', 'debt relief programs', 'flight booking'],
+      path: '/'
+    })
   }, [])
+
+  // Listen to popstate and initial load
+  useEffect(() => {
+    parseCurrentLocation()
+    window.addEventListener('popstate', parseCurrentLocation)
+    window.addEventListener('hashchange', parseCurrentLocation)
+    return () => {
+      window.removeEventListener('popstate', parseCurrentLocation)
+      window.removeEventListener('hashchange', parseCurrentLocation)
+    }
+  }, [parseCurrentLocation])
 
   // Fetch admin contact configuration on mount
   useEffect(() => {
@@ -89,36 +167,62 @@ export default function App() {
     setSplashDone(true)
   }, [])
 
+  // Navigation handlers with HTML5 History API pushState
   const handleNavigateHome = () => {
     if (window.location.hash === '#admin') {
       window.location.hash = ''
     }
-    try {
-      const cached = localStorage.getItem('contact_config')
-      if (cached) setContactConfig(JSON.parse(cached))
-    } catch {}
+    if (window.location.pathname !== '/') {
+      window.history.pushState(null, '', '/')
+    }
     setViewState('home')
     setActiveVertical('')
     setActiveSub('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const handleNavigateAdmin = () => {
-    window.location.hash = 'admin'
-    setViewState('admin')
+    updatePageSEO({
+      title: 'SmartQuoteHub — Compare Plans & Get Free Quotes Nationwide',
+      description: 'Compare free quotes from top-rated providers nationwide. Find affordable ACA health insurance, Medicare, auto & home insurance, home improvement, debt relief, and flight booking in 60 seconds.',
+      path: '/'
+    })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleNavigateVertical = (verticalId) => {
+    const newPath = `/services/${verticalId}`
+    if (window.location.pathname !== newPath) {
+      window.history.pushState(null, '', newPath)
+    }
     setActiveVertical(verticalId)
+    setActiveSub('')
     setViewState('vertical')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleNavigateSubVertical = (verticalId, subId) => {
+    const newPath = `/services/${verticalId}/${subId}`
+    if (window.location.pathname !== newPath) {
+      window.history.pushState(null, '', newPath)
+    }
     setActiveVertical(verticalId)
     setActiveSub(subId)
     setViewState('sub-vertical')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleNavigateLegal = (type) => {
+    const newPath = type === 'privacy' ? '/privacy-policy' : '/terms-of-service'
+    if (window.location.pathname !== newPath) {
+      window.history.pushState(null, '', newPath)
+    }
+    setViewState(type === 'privacy' ? 'privacy' : 'terms')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleNavigateSiteMap = () => {
+    const newPath = '/sitemap'
+    if (window.location.pathname !== newPath) {
+      window.history.pushState(null, '', newPath)
+    }
+    setViewState('sitemap')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -126,8 +230,10 @@ export default function App() {
     setSubmittedLead(leadInfo)
     setViewState('thank-you')
     if (quoteOpen) setQuoteOpen(false)
+    if (window.location.pathname !== '/thank-you') {
+      window.history.pushState(null, '', '/thank-you')
+    }
 
-    // Pull absolute latest config (from localStorage if present, or state)
     let liveConfig = contactConfig
     try {
       const cached = localStorage.getItem('contact_config')
@@ -137,10 +243,8 @@ export default function App() {
       }
     } catch {}
 
-    // Resolve individual service hotline phone number
     const sPhone = getServicePhone(leadInfo?.service, leadInfo?.category, liveConfig)
 
-    // STRICT RULE: If the number is not provided, the on-screen contact window will NOT display
     if (liveConfig?.enabled !== false && sPhone && sPhone.trim().length > 0) {
       setActiveServicePhone(sPhone.trim())
       setShowContactModal(true)
@@ -197,7 +301,7 @@ export default function App() {
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             >
               <Hero onQuoteClick={() => handleOpenQuote('')} />
-              <Services onNavigateVertical={handleNavigateVertical} />
+              <Services onSelectSubVertical={handleNavigateSubVertical} />
               <HowItWorks />
               <Testimonials />
               <FAQ onQuoteClick={() => handleOpenQuote('')} />
@@ -240,7 +344,48 @@ export default function App() {
                 subId={activeSub}
                 onNavigateHome={handleNavigateHome}
                 onNavigateVertical={handleNavigateVertical}
+                onNavigateSubVertical={handleNavigateSubVertical}
                 onFormSubmitted={handleFormSubmitted}
+              />
+            </motion.div>
+          )}
+
+          {viewState === 'privacy' && (
+            <motion.div
+              key="privacy"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.35 }}
+            >
+              <PrivacyPolicy onNavigateHome={handleNavigateHome} />
+            </motion.div>
+          )}
+
+          {viewState === 'terms' && (
+            <motion.div
+              key="terms"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.35 }}
+            >
+              <TermsOfService onNavigateHome={handleNavigateHome} />
+            </motion.div>
+          )}
+
+          {viewState === 'sitemap' && (
+            <motion.div
+              key="sitemap"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.35 }}
+            >
+              <SiteMap
+                onNavigateHome={handleNavigateHome}
+                onNavigateVertical={handleNavigateVertical}
+                onNavigateSubVertical={handleNavigateSubVertical}
               />
             </motion.div>
           )}
@@ -264,8 +409,10 @@ export default function App() {
 
       <Footer
         onQuoteClick={() => handleOpenQuote('')}
-        onNavigateHome={handleNavigateHome}
         onNavigateVertical={handleNavigateVertical}
+        onNavigateSubVertical={handleNavigateSubVertical}
+        onNavigateLegal={handleNavigateLegal}
+        onNavigateSiteMap={handleNavigateSiteMap}
       />
       <QuoteForm
         isOpen={quoteOpen}
@@ -286,5 +433,3 @@ export default function App() {
     </>
   )
 }
-
-

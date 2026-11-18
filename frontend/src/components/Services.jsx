@@ -75,11 +75,9 @@ const services = [
   },
 ]
 
-export default function Services({ onNavigateVertical, onSelectSubVertical }) {
+export default function Services({ onSelectSubVertical }) {
   const handleCardClick = (service) => {
-    if (onNavigateVertical) {
-      onNavigateVertical(service.verticalId)
-    } else if (onSelectSubVertical) {
+    if (onSelectSubVertical) {
       onSelectSubVertical(service.verticalId, service.subId)
     }
   }
@@ -133,9 +131,16 @@ export default function Services({ onNavigateVertical, onSelectSubVertical }) {
                   <h3 className="service-title">{service.title}</h3>
                   <p className="service-desc">{service.description}</p>
                   <div className="service-actions">
-                    <span className="service-link">
-                      View Plans & Quotes <span>→</span>
-                    </span>
+                    <a
+                      href={`/services/${service.verticalId}/${service.subId}`}
+                      className="service-link"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handleCardClick(service)
+                      }}
+                    >
+                      View Plans &amp; Quotes <span>→</span>
+                    </a>
                   </div>
                 </motion.div>
               </ScrollReveal>

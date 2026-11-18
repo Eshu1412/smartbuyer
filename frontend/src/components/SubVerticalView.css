@@ -327,3 +327,215 @@
     font-size: var(--fs-base);
   }
 }
+
+/* ── SEO Rich Elements Styling ── */
+.subvertical-trust-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+.badge-pill {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: #1d4ed8;
+}
+
+.section-subheading {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  color: var(--fg);
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.plan-cta-btn {
+  margin-top: auto;
+  width: 100%;
+  text-align: center;
+}
+
+/* Consumer Guide */
+.seo-guide-section {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-10);
+  margin-top: var(--space-16);
+  margin-bottom: var(--space-16);
+}
+
+.guide-headline {
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 800;
+  color: var(--fg);
+  margin-bottom: var(--space-4);
+}
+
+.guide-paragraphs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--fg-secondary);
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+.guide-tips-box {
+  margin-top: var(--space-6);
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.guide-tips-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #92400E;
+  margin-bottom: var(--space-4);
+}
+
+.guide-tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.guide-tips-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  color: #78350F;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.guide-check {
+  color: #D97706;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+/* Why Choose Grid */
+.seo-why-choose {
+  margin-bottom: var(--space-16);
+}
+
+.why-choose-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-6);
+}
+
+.why-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.why-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-3);
+}
+
+.why-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: var(--space-2);
+}
+
+.why-card p {
+  font-size: 0.88rem;
+  color: var(--fg-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* FAQ Accordion */
+.seo-faqs-section {
+  margin-bottom: var(--space-16);
+}
+
+.faq-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-accordion-item {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.faq-accordion-item.open {
+  border-color: var(--primary);
+}
+
+.faq-accordion-header {
+  width: 100%;
+  padding: var(--space-5) var(--space-6);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  gap: var(--space-4);
+}
+
+.faq-q-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.faq-q-icon {
+  color: var(--primary);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.faq-accordion-body {
+  padding: 0 var(--space-6) var(--space-5);
+  color: var(--fg-secondary);
+  font-size: 0.96rem;
+  line-height: 1.7;
+}
+
+.subvertical-bottom-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: center;
+  padding-top: var(--space-6);
+}
+
