@@ -75,10 +75,12 @@ const services = [
   },
 ]
 
-export default function Services({ onSelectSubVertical }) {
+export default function Services({ onNavigateVertical, onSelectSubVertical }) {
   const handleCardClick = (service) => {
-    if (onSelectSubVertical) {
-      onSelectSubVertical(service.verticalId, service.subId)
+    if (onNavigateVertical) {
+      onNavigateVertical(service.verticalId)
+    } else if (onSelectSubVertical) {
+      onSelectSubVertical(service.verticalId)
     }
   }
 
@@ -132,7 +134,7 @@ export default function Services({ onSelectSubVertical }) {
                   <p className="service-desc">{service.description}</p>
                   <div className="service-actions">
                     <a
-                      href={`/services/${service.verticalId}/${service.subId}`}
+                      href={`/services/${service.verticalId}`}
                       className="service-link"
                       onClick={(e) => {
                         e.preventDefault()
